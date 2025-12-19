@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { RadialBarChart, RadialBar, ResponsiveContainer } from 'recharts';
 import { SalesRep, View } from '../types';
@@ -18,14 +19,14 @@ interface DashboardProps {
 
 const MetricCard = ({ title, children, tooltip }: { title: string, children?: React.ReactNode, tooltip: any }) => (
   <Tooltip {...tooltip}>
-    <div className="relative h-full w-full bg-white/95 backdrop-blur-md border border-white/20 rounded-[28px] p-4 hover:translate-y-[-4px] transition duration-300 flex flex-col group cursor-pointer shadow-xl active:scale-[0.98]">
-        <div className="flex items-center justify-between mb-1.5">
-            <h3 className="text-slate-500 font-black text-[10px] uppercase tracking-[0.15em]">{title}</h3>
-            <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                <svg className="w-3.5 h-3.5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+    <div className="relative h-full w-full bg-[oklch(1_0_0_/_0.18)] backdrop-blur-[32px] saturate-[150%] border border-[oklch(1_0_0_/_0.25)] rounded-[24px] p-5 hover:backdrop-blur-[40px] hover:brightness-[1.08] transition-all duration-300 cubic-bezier(0.4, 0, 0.2, 1) flex flex-col group cursor-pointer shadow-[0_8px_32px_oklch(0.2_0_0_/_0.15)] active:scale-[0.98]">
+        <div className="flex items-center justify-between mb-4">
+            <h3 className="text-[oklch(1_0_0_/_0.85)] font-semibold text-[11px] uppercase tracking-[1px]">{title}</h3>
+            <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             </div>
         </div>
-        <div className="flex-1 flex flex-col justify-center min-h-0">
+        <div className="flex-1 flex flex-col justify-center min-h-0 text-[oklch(1_0_0_/_0.96)]">
             {children}
         </div>
     </div>
@@ -42,7 +43,6 @@ export const DealHealthDashboard: React.FC<DashboardProps> = ({
     allActions
 }) => {
   const metrics = getRepMetrics(currentUser.id);
-  const repName = currentUser.firstName;
   
   const [animatedScore, setAnimatedScore] = useState(metrics.dealHealthScore + scoreAdjustment);
   const targetScoreValue = Math.min(100, metrics.dealHealthScore + scoreAdjustment);
@@ -70,10 +70,10 @@ export const DealHealthDashboard: React.FC<DashboardProps> = ({
   }, [animatedScore, targetScoreValue]);
 
   const getRingColor = (score: number) => {
-      if (score >= 100) return '#00BFA5';
-      if (score >= 80) return '#465B7D';
-      if (score >= 60) return '#FF6B35';
-      return '#E11D48';
+      if (score >= 100) return '#00D9FF'; 
+      if (score >= 80) return '#60A5FA'; 
+      if (score >= 60) return '#FF6B35'; 
+      return '#EF4444'; 
   };
 
   const scoreData = [{ name: 'Health', value: animatedScore, fill: getRingColor(animatedScore) }];
@@ -99,81 +99,123 @@ export const DealHealthDashboard: React.FC<DashboardProps> = ({
 
   const userRankIndex = leaderboard.findIndex(r => r.id === currentUser.id);
   const userRank = userRankIndex + 1;
-  const top10 = leaderboard.slice(0, 10);
+
+  // UX Optimization: Fixed Data Structure for Leaderboard view
+  const leaderboardData = useMemo(() => {
+    if (showFullLeaderboard) {
+        return { type: 'full' as const, items: leaderboard };
+    }
+    
+    const top3 = leaderboard.slice(0, 3);
+    if (userRank <= 3) {
+        return { type: 'full' as const, items: top3 };
+    }
+
+    // Context around current user
+    const contextStart = Math.max(3, userRankIndex - 1);
+    const contextEnd = Math.min(leaderboard.length, userRankIndex + 2);
+    const contextWindow = leaderboard.slice(contextStart, contextEnd);
+    
+    return { 
+        type: 'windowed' as const, 
+        top3, 
+        contextWindow, 
+        hasGap: contextStart > 3 
+    };
+  }, [leaderboard, userRank, userRankIndex, showFullLeaderboard]);
 
   const quickPathAction = visibleActions.length > 0 ? visibleActions[0] : null;
 
   return (
-    <div className="space-y-4 animate-ios-slide pb-20">
+    <div className="space-y-6 animate-ios-slide pb-24 mesh-bg min-h-screen p-6 rounded-[48px] -m-4">
       
       {/* 1. SALES EXCELLENCE SCORECARD */}
-      <section className="bg-white/95 backdrop-blur-xl border border-white/30 rounded-[32px] overflow-hidden shadow-2xl">
-        <div className="px-5 py-3 border-b border-slate-100 flex justify-between items-center">
+      <section className="bg-[oklch(1_0_0_/_0.18)] backdrop-blur-[32px] saturate-[150%] border border-[oklch(1_0_0_/_0.25)] rounded-[24px] overflow-hidden shadow-[0_12px_40px_rgba(31,38,135,0.2)]">
+        <div className="px-6 py-4 border-b border-white/15 flex justify-between items-center bg-white/5">
             <div>
-                <h2 className="text-slate-900 font-black text-lg tracking-tight">Sales Scorecard</h2>
-                <p className="text-slate-500 text-[9px] font-bold uppercase tracking-widest mt-0.5">Performance Metrics</p>
+                <h2 className="text-[oklch(1_0_0_/_0.98)] font-semibold text-lg tracking-[0.5px]">Sales Scorecard</h2>
+                <p className="text-[oklch(1_0_0_/_0.85)] text-[11px] font-semibold uppercase tracking-[2px] mt-0.5">Performance Metrics</p>
             </div>
-            <div className={`px-2.5 py-1 rounded-full flex items-center space-x-1.5 ${animatedScore >= 100 ? 'bg-teal-500/10' : (animatedScore >= 80 ? 'bg-blue-500/10' : 'bg-orange-500/10')}`}>
-                <div className={`w-1 h-1 rounded-full animate-pulse ${animatedScore >= 100 ? 'bg-teal-500' : (animatedScore >= 80 ? 'bg-blue-500' : 'bg-orange-500')}`}></div>
-                <span className={`text-[8px] font-black uppercase tracking-widest ${animatedScore >= 100 ? 'text-teal-600' : (animatedScore >= 80 ? 'text-blue-600' : 'text-orange-600')}`}>
-                    {animatedScore >= 100 ? 'Excellent' : (animatedScore >= 80 ? 'On Target' : 'Improving')}
+            <div className="px-3 py-1.5 rounded-full flex items-center space-x-2 bg-[oklch(1_0_0_/_0.25)]">
+                <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${animatedScore >= 100 ? 'bg-cyan-400' : (animatedScore >= 80 ? 'bg-blue-400' : 'bg-[#FF6B35]')}`}></div>
+                <span className="text-[9px] font-semibold uppercase tracking-widest text-[oklch(1_0_0_/_0.98)]">
+                    {animatedScore >= 100 ? 'Peak' : (animatedScore >= 80 ? 'Solid' : 'In Progress')}
                 </span>
             </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2">
+        <div className="grid grid-cols-1 lg:grid-cols-2 divide-x divide-white/10">
             {/* PERFORMANCE SECTION */}
-            <div className="px-5 pt-2 pb-5 flex flex-col items-center border-r border-slate-50">
-                <div className="relative w-40 h-40 flex items-center justify-center mb-1 transform hover:scale-105 transition-all duration-500 cursor-pointer">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <RadialBarChart innerRadius="85%" outerRadius="100%" barSize={12} data={scoreData} startAngle={90} endAngle={-270}>
-                            <RadialBar background={{ fill: 'rgba(0,0,0,0.03)' }} dataKey="value" cornerRadius={50} />
-                        </RadialBarChart>
-                    </ResponsiveContainer>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-5xl font-black tracking-tighter text-slate-900 leading-none">{animatedScore}</span>
-                        <span className="text-[8px] text-slate-400 font-black uppercase tracking-[0.4em] mt-1">Health</span>
+            <div className="px-6 pt-4 pb-8 flex flex-col items-center">
+                <Tooltip 
+                    title="DEAL HEALTH BREAKDOWN" 
+                    description="Your Health Score is a composite index representing the overall quality, completeness, and risk profile of your active pipeline data."
+                    metrics={[
+                        { label: 'Process Adherence', value: `${metrics.processAdherence.completionRate}%`, desc: 'Level of compliance with required CRM hygiene standards.' },
+                        { label: 'Exposure Risk', value: `${metrics.pipeline.atRisk} Critical`, desc: 'Number of opportunities with significant data gaps or late stages.' },
+                        { label: 'Data Integrity', value: `${metrics.dataQuality.score}/100`, desc: 'Statistical accuracy of close dates and value projections.' },
+                        { label: 'Momentum', value: metrics.trend, desc: 'The directional movement of your performance score over time.' }
+                    ]}
+                >
+                    <div className="relative w-56 h-56 flex items-center justify-center mb-2 group cursor-pointer">
+                        <div className="absolute inset-0 rounded-full shadow-[0_0_40px_rgba(59,130,246,0.1)] group-hover:shadow-[0_0_60px_rgba(59,130,246,0.2)] transition-shadow duration-500 pointer-events-none"></div>
+                        
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                            <RadialBarChart innerRadius="85%" outerRadius="100%" barSize={14} data={scoreData} startAngle={90} endAngle={-270}>
+                                <RadialBar 
+                                    background={{ fill: 'rgba(255,255,255,0.06)' }} 
+                                    dataKey="value" 
+                                    cornerRadius={50} 
+                                />
+                            </RadialBarChart>
+                        </ResponsiveContainer>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center m-6">
+                            <span className="text-[84px] font-[300] tracking-tighter text-[oklch(1_0_0_/_0.96)] leading-none drop-shadow-2xl">{animatedScore}</span>
+                            <span className="text-[12px] text-[oklch(1_0_0_/_0.85)] font-semibold uppercase tracking-[2.5px] mt-1">Health</span>
+                        </div>
                     </div>
-                </div>
+                </Tooltip>
 
-                <div className="w-full max-w-sm space-y-2.5">
+                <div className="w-full max-w-sm space-y-4">
                     {animatedScore >= 100 ? (
-                        <div className="bg-teal-500 text-white p-3 rounded-[16px] text-center shadow-lg shadow-teal-500/20">
-                            <span className="text-lg mb-0.5 block">🎯</span>
-                            <span className="font-black text-[9px] uppercase tracking-[0.2em]">Target Achieved!</span>
+                        <div className="bg-gradient-to-br from-cyan-500/30 to-blue-600/30 backdrop-blur-xl border border-white/20 text-[oklch(1_0_0_/_0.98)] p-4 rounded-[20px] text-center shadow-2xl">
+                            <span className="text-2xl mb-1 block">🏆</span>
+                            <span className="font-semibold text-[11px] uppercase tracking-[2.5px]">Mastery Achieved</span>
                         </div>
                     ) : (
-                        <div className="bg-slate-50 p-3 rounded-[16px] text-center border border-slate-100">
-                             <div className="flex justify-between items-center text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-1">
-                                <span>Progress</span>
-                                <span>{animatedScore}/100</span>
+                        <div className="bg-white/5 p-4 rounded-[20px] text-center border border-white/15 backdrop-blur-md shadow-inner">
+                             <div className="flex justify-between items-center text-[11px] font-semibold uppercase tracking-[2px] text-[oklch(1_0_0_/_0.85)] mb-2">
+                                <span>Pace to Target</span>
+                                <span className="text-[oklch(1_0_0_/_0.96)]">{animatedScore}/100</span>
                              </div>
-                             <div className="w-full h-1 bg-slate-200 rounded-full overflow-hidden mb-1.5">
-                                <div className="h-full bg-teal-500 transition-all duration-1000" style={{ width: `${animatedScore}%` }}></div>
+                             <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden mb-2">
+                                <div className="h-full bg-gradient-to-r from-[#0EA5E9] to-[#3B82F6] transition-all duration-1000 ease-out" style={{ width: `${animatedScore}%` }}></div>
                              </div>
-                             <p className="text-slate-900 font-black text-[10px] uppercase tracking-widest">+{100 - animatedScore}pts to target</p>
+                             <p className="text-[oklch(1_0_0_/_0.96)] font-semibold text-[11px] uppercase tracking-[2px]">Reach 100% for peak bonus</p>
                         </div>
                     )}
 
-                    <div className="grid grid-cols-2 gap-2.5">
+                    <div className="grid grid-cols-2 gap-3">
                         <button 
                             onClick={() => !isRiskComplete && scrollToActions('missing_field')}
                             disabled={isRiskComplete}
-                            className={`bg-white border-2 border-slate-100 p-2.5 rounded-[16px] transition-all flex flex-col items-center justify-center ${isRiskComplete ? 'opacity-50 cursor-default grayscale' : 'hover:border-teal-500/30 active:scale-95'}`}
+                            className={`bg-white/8 border border-white/15 p-3 rounded-[20px] transition-all flex flex-col items-center justify-center backdrop-blur-lg ${isRiskComplete ? 'opacity-40 cursor-default' : 'hover:bg-white/15 hover:border-white/30 hover:shadow-lg active:scale-95'}`}
                         >
-                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Risk</p>
-                            <p className={`font-black tracking-tight ${isRiskComplete ? 'text-slate-400 text-[10px]' : 'text-base text-orange-500'}`}>
-                                {isRiskComplete ? 'All Completed ✓' : `${pointsAtRisk} PTS`}
+                            <p className="text-[11px] font-semibold text-[oklch(1_0_0_/_0.85)] uppercase tracking-[1px] mb-1">Exposure</p>
+                            <p className={`font-semibold tracking-tight text-lg text-[oklch(1_0_0_/_0.96)] flex items-center`}>
+                                {!isRiskComplete && <span className="w-2 h-2 rounded-full bg-[#FF6B35] mr-2"></span>}
+                                {isRiskComplete ? 'None ✓' : `${pointsAtRisk} PTS`}
                             </p>
                         </button>
                         <button 
                             onClick={() => !isGrowthComplete && scrollToActions('potential')}
                             disabled={isGrowthComplete}
-                            className={`bg-white border-2 border-slate-100 p-2.5 rounded-[16px] transition-all flex flex-col items-center justify-center ${isGrowthComplete ? 'opacity-50 cursor-default grayscale' : 'hover:border-teal-500/30 active:scale-95'}`}
+                            className={`bg-white/8 border border-white/15 p-3 rounded-[20px] transition-all flex flex-col items-center justify-center backdrop-blur-lg ${isGrowthComplete ? 'opacity-40 cursor-default' : 'hover:bg-white/15 hover:border-white/30 hover:shadow-lg active:scale-95'}`}
                         >
-                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Growth</p>
-                            <p className={`font-black tracking-tight ${isGrowthComplete ? 'text-slate-400 text-[10px]' : 'text-base text-teal-500'}`}>
-                                {isGrowthComplete ? 'All Completed ✓' : `+${pointsUnlockable} PTS`}
+                            <p className="text-[11px] font-semibold text-[oklch(1_0_0_/_0.85)] uppercase tracking-[1px] mb-1">Potential</p>
+                            <p className={`font-semibold tracking-tight text-lg text-[oklch(1_0_0_/_0.96)] flex items-center`}>
+                                {!isGrowthComplete && <span className="w-2 h-2 rounded-full bg-[#00D9FF] mr-2"></span>}
+                                {isGrowthComplete ? 'Maxed ✓' : `+${pointsUnlockable} PTS`}
                             </p>
                         </button>
                     </div>
@@ -181,35 +223,39 @@ export const DealHealthDashboard: React.FC<DashboardProps> = ({
             </div>
 
             {/* LEADERBOARD SECTION */}
-            <div className="bg-slate-50/50 p-5">
-                <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-slate-900 font-black text-sm tracking-tight">Leaderboard</h3>
-                    <div className="bg-[#465B7D] text-white px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest shadow-lg">Rank #{userRank}</div>
+            <div className="bg-white/[0.03] p-6 flex flex-col">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-[oklch(1_0_0_/_0.98)] font-semibold text-base tracking-[0.5px]">Team Rankings</h3>
+                    <div className="bg-white/15 text-[oklch(1_0_0_/_0.96)] px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-[1.5px] shadow-sm">Current: #{userRank}</div>
                 </div>
 
-                <div className="space-y-1 mb-3 max-h-[180px] overflow-y-auto pr-2 custom-scrollbar">
-                    {(showFullLeaderboard ? leaderboard : top10).map((rep: any) => {
-                        const isUser = rep.id === currentUser.id;
-                        return (
-                            <div key={rep.id} className={`flex items-center justify-between p-2 rounded-lg transition ${isUser ? 'bg-white shadow-sm ring-1 ring-teal-500/10' : 'hover:bg-white/40'}`}>
-                                <div className="flex items-center space-x-2.5">
-                                    <span className={`text-[9px] font-black w-4 ${isUser ? 'text-teal-600' : 'text-slate-400'}`}>#{rep.rank}</span>
-                                    <img src={rep.profilePicUrl} className="w-7 h-7 rounded-full object-cover border border-white shadow-sm" alt="" />
-                                    <span className={`text-[11px] font-bold ${isUser ? 'text-slate-900' : 'text-slate-600'}`}>
-                                        {isUser ? 'MICHAEL (YOU)' : `${rep.firstName} ${rep.lastName.charAt(0)}.`}
-                                    </span>
-                                </div>
-                                <span className={`text-[11px] font-black ${isUser ? 'text-teal-600' : 'text-slate-900'}`}>{rep.score}</span>
-                            </div>
-                        );
-                    })}
+                <div className="flex-1 space-y-1.5 mb-4 max-h-[220px] overflow-y-auto pr-2 custom-scrollbar">
+                    {leaderboardData.type === 'full' ? (
+                        leaderboardData.items.map(rep => (
+                            <LeaderboardRow key={rep.id} rep={rep} isUser={rep.id === currentUser.id} />
+                        ))
+                    ) : (
+                        <>
+                            {leaderboardData.top3.map(rep => (
+                                <LeaderboardRow key={rep.id} rep={rep} isUser={rep.id === currentUser.id} />
+                            ))}
+                            
+                            {leaderboardData.hasGap && (
+                                <div className="py-1 text-center text-white/30 text-[10px] tracking-[4px]">...</div>
+                            )}
+
+                            {leaderboardData.contextWindow.map(rep => (
+                                <LeaderboardRow key={rep.id} rep={rep} isUser={rep.id === currentUser.id} />
+                            ))}
+                        </>
+                    )}
                 </div>
                 
                 <button 
                     onClick={() => setShowFullLeaderboard(!showFullLeaderboard)}
-                    className="w-full py-2 text-[8px] font-black uppercase tracking-[0.2em] text-[#465B7D] border border-[#465B7D]/10 rounded-lg hover:bg-[#465B7D]/5 transition"
+                    className="w-full py-3 text-[11px] font-semibold uppercase tracking-[2px] text-white/65 border border-white/15 rounded-xl hover:bg-white/10 hover:text-white transition-all backdrop-blur-md"
                 >
-                    {showFullLeaderboard ? 'Collapse' : 'View All 100 Reps'}
+                    {showFullLeaderboard ? 'Close View' : `See All 100 Reps`}
                 </button>
             </div>
         </div>
@@ -217,122 +263,117 @@ export const DealHealthDashboard: React.FC<DashboardProps> = ({
         {/* QUICK PATH CTA */}
         <button 
             onClick={() => quickPathAction && onFixAction(quickPathAction)}
-            className="w-full bg-[#FF6B35] py-3.5 px-5 flex items-center justify-between group hover:saturate-150 transition-all active:scale-[0.99]"
+            className="w-full bg-gradient-to-r from-[#FF6B35] to-[#3B82F6] py-5 px-6 flex items-center justify-between group hover:brightness-110 transition-all duration-500 active:scale-[0.99] border-t border-white/10"
         >
-            <div className="flex items-center space-x-2.5">
-                <div className="bg-white/20 p-1 rounded-full text-xs">🎯</div>
+            <div className="flex items-center space-x-4">
+                <div className="bg-white/20 p-2 rounded-full text-sm shadow-xl border border-white/30 group-hover:scale-110 transition-transform">⚡</div>
                 <div className="text-left">
-                    <p className="text-white/70 text-[7px] font-black uppercase tracking-[0.2em]">Recommended</p>
-                    <p className="text-white font-black text-xs leading-none">{quickPathAction?.label || "Optimize Pipeline"}</p>
+                    <p className="text-white/70 text-[10px] font-black uppercase tracking-[2.5px] mb-0.5">Top Recommendation</p>
+                    <p className="text-[oklch(1_0_0_/_0.98)] font-bold text-base leading-none tracking-tight">{quickPathAction?.label || "Scan for Insights"}</p>
                 </div>
             </div>
-            <div className="flex items-center space-x-1 bg-white text-[#FF6B35] px-3 py-1 rounded-full font-black text-[9px] shadow-xl">
+            <div className="flex items-center space-x-2 bg-white/25 backdrop-blur-xl text-[oklch(1_0_0_/_0.98)] px-4 py-1.5 rounded-full font-black text-[10px] shadow-2xl border border-white/25 group-hover:translate-x-1 transition-all">
                 <span>+{quickPathAction?.points || 15} PTS</span>
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
             </div>
         </button>
       </section>
 
       {/* 2. METRIC CARDS GRID */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard 
              title="Coverage"
              tooltip={{
-                 title: "COVERAGE (88% to target)",
-                 description: "Analysis of territory gap vs goal.",
-                 metrics: [
-                     { label: 'Gap to Goal', value: '$49k', desc: 'Need $49k more (12% gap)' },
-                     { label: 'Quick Win', value: '$85k', desc: '5 deals at 70%+ probability = $85k' },
-                     { label: 'Risk', value: '$120k', desc: '⚠️ $120k in deals untouched 14+ days' }
-                 ]
+                 title: "TERRITORY COVERAGE",
+                 description: "The percentage of your annual quota currently represented in your pipeline.",
+                 metrics: [{ label: 'Coverage', value: `${Math.round((metrics.territory.coverage / metrics.territory.quotaTarget) * 100)}%`, desc: 'Overall trend vs goal.' }]
              }}
           >
-             <div className="text-xl font-black text-slate-900 mb-0.5">{Math.round((metrics.territory.coverage / metrics.territory.quotaTarget) * 100)}%</div>
-             <p className="text-slate-500 text-[8px] font-medium">to target</p>
+             <div className="text-[28px] font-bold text-[oklch(1_0_0_/_0.96)] mb-1 leading-none">{Math.round((metrics.territory.coverage / metrics.territory.quotaTarget) * 100)}%</div>
+             <p className="text-[oklch(1_0_0_/_0.85)] text-[11px] font-semibold uppercase tracking-[1px] mt-1">to target</p>
           </MetricCard>
 
           <MetricCard title="Multiple" tooltip={{ 
-              title: "MULTIPLE (0.9x pipeline multiple)", 
-              description: "Pipeline depth and health assessment.",
-              metrics: [
-                  { label: 'Health Status', value: 'Low', desc: 'Need $452k more pipeline for healthy 2.0x' },
-                  { label: 'Bottleneck', value: '60%', desc: '60% early stage vs optimal 40%' },
-                  { label: 'Forecast', value: 'Behind', desc: 'Current pace = 65% of quota this quarter' }
-              ]
+              title: "PIPELINE MULTIPLE", 
+              description: "The ratio of total pipeline value to remaining quota.",
+              metrics: [{ label: 'Ratio', value: `${metrics.pipeline.coverageMultiple}x`, desc: 'Target ratio for safe attainment is 3x.' }]
           }}>
-             <div className="text-xl font-black text-slate-900 mb-0.5">{metrics.pipeline.coverageMultiple}x</div>
-             <p className="text-slate-500 text-[8px] font-medium">pipeline multiple</p>
+             <div className="text-[28px] font-bold text-[oklch(1_0_0_/_0.96)] mb-1 leading-none">{metrics.pipeline.coverageMultiple}x</div>
+             <p className="text-[oklch(1_0_0_/_0.85)] text-[11px] font-semibold uppercase tracking-[1px] mt-1">pipeline multiple</p>
           </MetricCard>
 
           <MetricCard title="Velocity" tooltip={{ 
-              title: "VELOCITY (26 SQLs monthly)", 
-              description: "Throughput and conversion performance.",
-              metrics: [
-                  { label: 'Conversion', value: '18%', desc: '18% MQL→SQL vs team avg 28% (losing 42 SQLs/mo)' },
-                  { label: 'Cycle Time', value: '92d', desc: '92 days vs team avg 67 days (costing $180k)' },
-                  { label: 'Quick Fix', value: '+60%', desc: 'Respond to MQLs within 1hr = +60% conversion' }
-              ]
+              title: "MATURATION VELOCITY", 
+              description: "The speed and volume of leads maturing into qualified opportunities.",
+              metrics: [{ label: 'SQLs', value: metrics.leadMaturation.sqls, desc: 'Average monthly output.' }]
           }}>
-             <div className="text-xl font-black text-slate-900 mb-0.5">{metrics.leadMaturation.sqls}</div>
-             <p className="text-slate-500 text-[8px] font-medium">SQLs monthly</p>
+             <div className="text-[28px] font-bold text-[oklch(1_0_0_/_0.96)] mb-1 leading-none">{metrics.leadMaturation.sqls}</div>
+             <p className="text-[oklch(1_0_0_/_0.85)] text-[11px] font-semibold uppercase tracking-[1px] mt-1">SQLs monthly</p>
           </MetricCard>
 
           <MetricCard title="Adherence" tooltip={{ 
-              title: "ADHERENCE (75% compliance)", 
-              description: "Execution tracking against methodology.",
-              metrics: [
-                  { label: 'Missing Steps', value: 'High', desc: 'Discovery (18%), Champion ID (22%), Exec sponsor (31%)' },
-                  { label: 'Impact', value: '2.2x', desc: '42% win rate with all steps vs 19% without' },
-                  { label: 'At Risk', value: '$240k', desc: '$240k in 8 deals missing required steps' }
-              ]
+              title: "PROCESS ADHERENCE", 
+              description: "Compliance with methodology and data entry requirements.",
+              metrics: [{ label: 'Rate', value: `${metrics.processAdherence.completionRate}%`, desc: 'CRM data integrity score.' }]
           }}>
-             <div className="text-xl font-black text-slate-900 mb-0.5">{metrics.processAdherence.completionRate}%</div>
-             <p className="text-slate-500 text-[8px] font-medium">compliance</p>
+             <div className="text-[28px] font-bold text-[oklch(1_0_0_/_0.96)] mb-1 leading-none">{metrics.processAdherence.completionRate}%</div>
+             <p className="text-[oklch(1_0_0_/_0.85)] text-[11px] font-semibold uppercase tracking-[1px] mt-1">compliance</p>
           </MetricCard>
       </div>
 
       {/* 3. ACTION PLAN SECTION */}
-      <section ref={actionsSectionRef} className="bg-white/95 backdrop-blur-xl border border-white/30 rounded-[32px] overflow-hidden shadow-2xl scroll-mt-20">
-          <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+      <section ref={actionsSectionRef} className="bg-[oklch(1_0_0_/_0.18)] backdrop-blur-[32px] saturate-[150%] border border-[oklch(1_0_0_/_0.25)] rounded-[24px] overflow-hidden shadow-[0_12px_40px_rgba(31,38,135,0.2)] scroll-mt-24">
+          <div className="p-5 border-b border-white/15 flex items-center justify-between bg-white/5">
               <div>
-                  <h2 className="text-slate-900 font-black text-base tracking-tight leading-none">Action Plan</h2>
-                  <p className="text-slate-500 text-[9px] font-bold uppercase tracking-widest mt-1">Michael Thompson</p>
+                  <h2 className="text-[oklch(1_0_0_/_0.98)] font-semibold text-base tracking-[0.5px]">Prioritized Roadmap</h2>
+                  <p className="text-[oklch(1_0_0_/_0.85)] text-[11px] font-semibold uppercase tracking-[2px] mt-1">Managed by AI Coach</p>
               </div>
-              <button onClick={() => onNavigate('DEALS')} className="text-[9px] font-black text-teal-600 uppercase tracking-widest hover:underline">View All</button>
+              <button onClick={() => onNavigate('DEALS')} className="text-[11px] font-bold text-white/80 border border-white/20 px-4 py-1.5 rounded-full hover:bg-white/10 transition-all uppercase tracking-[2px]">Inspect All</button>
           </div>
           
-          <div className="divide-y divide-slate-50">
+          <div className="divide-y divide-white/10">
               {visibleActions.length > 0 ? (
-                  visibleActions.map(action => (
-                      <div key={action.id} className={`p-4 flex items-center justify-between group hover:bg-slate-50/50 transition duration-300 ${highlightedType === action.type ? 'bg-teal-50 ring-2 ring-teal-500/20' : ''}`}>
-                          <div className="flex items-center space-x-3.5">
-                              <div className={`w-9 h-9 rounded-[12px] flex items-center justify-center text-sm shrink-0 transition shadow-sm ${
-                                  action.type === 'missing_field' ? 'bg-orange-500/10 text-orange-500' : 'bg-teal-500/10 text-teal-500'
+                  visibleActions.map((action) => (
+                      <div key={action.id} className={`p-5 flex items-center justify-between group hover:bg-white/10 transition-all duration-300 cubic-bezier(0.4, 0, 0.2, 1) ${highlightedType === action.type ? 'bg-white/20 ring-2 ring-white/30 border-white/20 shadow-2xl' : ''}`}>
+                          <div className="flex items-center space-x-5">
+                              <div className={`w-11 h-11 rounded-[16px] flex items-center justify-center text-base shrink-0 transition-all duration-300 shadow-xl backdrop-blur-md border border-white/25 ${
+                                  action.type === 'missing_field' 
+                                    ? 'bg-orange-500/25 text-orange-400 group-hover:bg-orange-500/40' 
+                                    : 'bg-cyan-500/25 text-cyan-400 group-hover:bg-cyan-500/40'
                               }`}>
                                   {action.type === 'missing_field' ? '⚠️' : '⚡'}
                               </div>
                               <div>
-                                  <p className="text-slate-900 font-black text-[13px] tracking-tight mb-0.5 leading-none">{action.label}</p>
-                                  <p className="text-slate-500 text-[8px] font-bold uppercase tracking-widest leading-none">{action.dealName}</p>
+                                  <p className="text-[oklch(1_0_0_/_0.98)] font-bold text-[14px] tracking-tight mb-1 leading-none">{action.label}</p>
+                                  <p className="text-[oklch(1_0_0_/_0.85)] text-[11px] font-semibold uppercase tracking-[2px] leading-none mt-1.5 flex items-center opacity-60">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-white/20 mr-2"></span>
+                                      {action.dealName}
+                                  </p>
                               </div>
                           </div>
-                          <div className="flex items-center space-x-3">
-                              <span className="text-teal-600 font-black text-[10px]">+{action.points} PTS</span>
+                          <div className="flex items-center space-x-4">
+                              <div className="text-right mr-2 hidden sm:block">
+                                  <span className="text-cyan-400 font-black text-[11px] tracking-widest">+{action.points} PTS</span>
+                                  <div className="w-full h-0.5 bg-cyan-500/20 mt-1 rounded-full"></div>
+                              </div>
                               <button 
                                   onClick={() => onFixAction(action)}
-                                  className={`w-20 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition shadow-sm active:scale-95 ${
-                                      action.type === 'missing_field' ? 'bg-[#FF6B35] text-white shadow-orange-500/20' : 'bg-[#10B981] text-white shadow-emerald-500/20'
+                                  className={`w-24 py-2.5 rounded-full text-[11px] font-black uppercase tracking-[2.5px] transition-all duration-300 active:scale-95 shadow-2xl border border-white/15 ${
+                                      action.type === 'missing_field' 
+                                        ? 'bg-[#FF6B35] text-white hover:bg-orange-500/90 shadow-orange-500/20' 
+                                        : 'bg-[#3B82F6] text-white hover:bg-blue-600/90 shadow-blue-500/20'
                                   }`}
                               >
-                                  {action.type === 'missing_field' ? 'Fix' : 'Unlock'}
+                                  {action.type === 'missing_field' ? 'Resolve' : 'Boost'}
                               </button>
                           </div>
                       </div>
                   ))
               ) : (
-                  <div className="p-8 text-center">
-                      <div className="text-3xl mb-3">🎉</div>
-                      <h3 className="text-slate-900 font-black text-lg mb-0.5 tracking-tight">On Track!</h3>
-                      <p className="text-slate-500 text-[10px] font-medium">Cleared all recommendations.</p>
+                  <div className="p-12 text-center bg-white/5 backdrop-blur-md">
+                      <div className="text-4xl mb-4 animate-bounce">✨</div>
+                      <h3 className="text-[oklch(1_0_0_/_0.98)] font-black text-xl mb-1 tracking-tight">Optimal Performance</h3>
+                      <p className="text-[oklch(1_0_0_/_0.85)] text-[11px] font-semibold uppercase tracking-[2.5px]">Your pipeline hygiene is currently peak.</p>
                   </div>
               )}
           </div>
@@ -340,3 +381,20 @@ export const DealHealthDashboard: React.FC<DashboardProps> = ({
     </div>
   );
 };
+
+// Properly type LeaderboardRow as a React.FC to handle React-managed attributes like 'key'.
+const LeaderboardRow: React.FC<{ rep: any; isUser: boolean }> = ({ rep, isUser }) => (
+    <div className={`flex items-center justify-between p-2.5 rounded-xl transition-all duration-300 ${isUser ? 'bg-white/18 shadow-xl ring-1 ring-white/30 border border-white/10' : 'hover:bg-white/8'}`}>
+        <div className="flex items-center space-x-3">
+            <span className={`text-[10px] font-black w-5 ${isUser ? 'text-cyan-400' : 'text-white/40'}`}>#{rep.rank}</span>
+            <img src={rep.profilePicUrl} className="w-8 h-8 rounded-full object-cover border border-white/25 shadow-md" alt="" />
+            <span className={`text-[12px] font-medium ${isUser ? 'text-white font-bold' : 'text-[oklch(1_0_0_/_0.96)]'}`}>
+                {isUser ? 'Michael T. (You)' : `${rep.firstName} ${rep.lastName.charAt(0)}.`}
+            </span>
+        </div>
+        <div className="flex items-center space-x-2">
+            <span className={`text-[12px] font-black ${isUser ? 'text-cyan-400' : 'text-[oklch(1_0_0_/_0.96)]'}`}>{rep.score}</span>
+            {isUser && <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse"></span>}
+        </div>
+    </div>
+);

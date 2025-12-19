@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleGenAI } from '@google/genai';
@@ -68,6 +67,14 @@ const DOMAIN_MAP: Record<string, string> = {
   'FINRA': 'finra.org'
 };
 
+const IconPhone = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+);
+
+const IconTrendingUp = () => (
+  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+);
+
 interface ClientAvatarProps {
     client: ClientGroup;
     isActive: boolean;
@@ -75,7 +82,6 @@ interface ClientAvatarProps {
 }
 
 const ClientAvatar: React.FC<ClientAvatarProps> = ({ client, isActive, onClick }) => {
-    // Hierarchy: Brandfetch -> Google Favicon -> AI Generating -> AI Result -> Initials
     const [status, setStatus] = useState<'brandfetch' | 'favicon' | 'generating' | 'ai' | 'initials'>('brandfetch');
     const [logoUrl, setLogoUrl] = useState(`https://cdn.brandfetch.io/${client.domain}`);
     const generatingRef = useRef(false);
@@ -88,25 +94,19 @@ const ClientAvatar: React.FC<ClientAvatarProps> = ({ client, isActive, onClick }
 
     const handleImageError = async () => {
         if (status === 'brandfetch') {
-            console.debug(`[Logo] Brandfetch failed for ${client.name}, trying Google Favicon...`);
             setStatus('favicon');
             setLogoUrl(`https://www.google.com/s2/favicons?domain=${client.domain}&sz=128`);
         } else if (status === 'favicon') {
             if (generatingRef.current) return;
-            console.debug(`[Logo] Favicon failed for ${client.name}, triggering AI Generation...`);
             generatingRef.current = true;
             setStatus('generating');
 
             try {
                 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
                 const response = await ai.models.generateContent({
-                    model: 'gemini-2.5-flash-image',
+                    model: 'gemini-3-flash-preview',
                     contents: {
-                        parts: [
-                            {
-                                text: `Generate a high-quality, professional corporate logo for ${client.name}. Minimalist, vector style, accurate brand colors, white background.`,
-                            },
-                        ],
+                        parts: [{ text: `Generate a minimalist corporate logo for ${client.name} on white background.` }],
                     },
                 });
 
@@ -123,7 +123,6 @@ const ClientAvatar: React.FC<ClientAvatarProps> = ({ client, isActive, onClick }
                 }
                 if (!foundImage) throw new Error('AI returned no image data');
             } catch (error) {
-                console.error(`[Logo] AI Generation failed for ${client.name}:`, error);
                 setStatus('initials');
             } finally {
                 generatingRef.current = false;
@@ -138,8 +137,8 @@ const ClientAvatar: React.FC<ClientAvatarProps> = ({ client, isActive, onClick }
             className={`relative group shrink-0 transition-all duration-300 z-10 ${isActive ? 'z-50 scale-110 -mx-1' : 'hover:z-50 hover:scale-105'}`}
             whileHover={{ y: -5 }}
         >
-            <div className={`w-12 h-12 rounded-full border-3 shadow-xl overflow-hidden flex items-center justify-center transition-all duration-300 bg-white ${
-                isActive ? 'border-teal-500 ring-4 ring-teal-500/20' : 'border-white hover:border-teal-100'
+            <div className={`w-12 h-12 rounded-full border-2 shadow-[0_4px_12px_rgba(0,0,0,0.15)] overflow-hidden flex items-center justify-center transition-all duration-300 bg-white ${
+                isActive ? 'border-white ring-4 ring-white/30' : 'border-white/20 hover:border-white/40'
             }`}>
                 {status === 'initials' ? (
                     <div className="text-slate-400 font-black text-xs uppercase bg-slate-50 w-full h-full flex items-center justify-center">
@@ -161,8 +160,7 @@ const ClientAvatar: React.FC<ClientAvatarProps> = ({ client, isActive, onClick }
                     </div>
                 )}
             </div>
-            
-            <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1 bg-slate-900 text-white text-[9px] font-black uppercase rounded-full opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-xl pointer-events-none">
+            <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1 bg-slate-900 text-white text-[9px] font-black uppercase rounded-full opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-xl pointer-events-none z-[100]">
                 {client.name}
             </div>
         </motion.button>
@@ -190,10 +188,7 @@ export const DealPipeline: React.FC<DealPipelineProps> = ({
       return allDeals.filter(deal => {
           if (deal.ownerId !== currentUser.id) return false;
           const query = searchQuery.toLowerCase().trim();
-          const matchesSearch = 
-            deal.name.toLowerCase().includes(query) ||
-            deal.account.toLowerCase().includes(query);
-          return query ? matchesSearch : true;
+          return query ? (deal.name.toLowerCase().includes(query) || deal.account.toLowerCase().includes(query)) : true;
       });
   }, [allDeals, searchQuery, currentUser.id]);
 
@@ -202,11 +197,7 @@ export const DealPipeline: React.FC<DealPipelineProps> = ({
       filteredDeals.forEach(deal => {
           if (!groups[deal.account]) {
               const domain = DOMAIN_MAP[deal.account] || (deal.account.toLowerCase().replace(/[\s&]+/g, '') + '.com');
-              groups[deal.account] = { 
-                  name: deal.account, 
-                  domain, 
-                  deals: [] 
-              };
+              groups[deal.account] = { name: deal.account, domain, deals: [] };
           }
           groups[deal.account].deals.push(deal);
       });
@@ -233,188 +224,240 @@ export const DealPipeline: React.FC<DealPipelineProps> = ({
 
   const handleMarkComplete = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!fieldValue.trim()) {
-      setValidationError(true);
-      fieldRef.current?.focus();
-      return;
-    }
+    if (!fieldValue.trim()) { setValidationError(true); fieldRef.current?.focus(); return; }
     setValidationError(false);
     onCompleteAction?.();
   };
 
   const getStageColor = (stage: string) => {
       switch(stage) {
-          case 'Discovery': return 'text-purple-600 bg-purple-50 border-purple-100';
-          case 'Qualification': return 'text-blue-600 bg-blue-50 border-blue-100';
-          case 'Proposal': return 'text-orange-600 bg-orange-50 border-orange-100';
-          case 'Negotiation': return 'text-amber-600 bg-amber-50 border-amber-100';
-          case 'Closed Won': return 'text-emerald-600 bg-emerald-50 border-emerald-100';
-          case 'Closed Lost': return 'text-rose-600 bg-rose-50 border-rose-100';
-          default: return 'text-slate-500 bg-slate-50 border-slate-100';
+          case 'Discovery': return 'text-white bg-purple-600 border-purple-400';
+          case 'Qualification': return 'text-white bg-blue-600 border-blue-400';
+          case 'Proposal': return 'text-white bg-orange-600 border-orange-400';
+          case 'Negotiation': return 'text-white bg-amber-600 border-amber-400';
+          case 'Closed Won': return 'text-white bg-emerald-600 border-emerald-400';
+          case 'Closed Lost': return 'text-white bg-rose-600 border-rose-400';
+          default: return 'text-white bg-white/20 border-white/20';
       }
   };
 
+  const isButtonEnabled = fieldValue.trim().length > 0;
+
   return (
-    <div className="space-y-4 animate-ios-slide pb-20">
-      
+    <div className="bg-gradient-to-br from-blue-500/90 via-blue-600/90 to-indigo-700/90 min-h-screen p-6 space-y-5 animate-ios-slide pb-20 rounded-[48px] -m-4">
       {activeAction && (
           <motion.div 
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
-            className="bg-gradient-to-r from-[#465B7D] to-[#2A3F5F] rounded-[24px] p-4 shadow-xl relative overflow-hidden border border-white/20"
+            className="bg-white/25 backdrop-blur-2xl rounded-[16px] border border-white/30 shadow-[0_12px_40px_rgba(0,0,0,0.15)] p-5 relative overflow-hidden"
           >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 rounded-full blur-2xl -mr-16 -mt-16"></div>
               <div className="flex items-center justify-between gap-4 relative z-10">
-                  <div className="flex items-center space-x-3.5">
-                      <div className="bg-white/10 p-2 rounded-[12px] backdrop-blur-md ring-1 ring-white/20">
-                          <svg className="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                  <div className="flex items-center space-x-4">
+                      <div className="bg-white/30 p-2.5 rounded-[12px] backdrop-blur-md ring-1 ring-white/30">
+                          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                       </div>
                       <div>
-                          <p className="text-white/60 text-[7px] font-black uppercase tracking-[0.2em] mb-0.5 leading-none">Focus: {activeAction.dealName}</p>
-                          <h3 className="text-[13px] font-black text-white tracking-tight leading-none mt-1">{activeAction.label}</h3>
+                          <p className="text-white/80 text-[8px] font-black uppercase tracking-[0.2em] mb-1 leading-none">Focus Area</p>
+                          <h3 className="text-[15px] font-black text-white tracking-tight leading-none">{activeAction.label}</h3>
                       </div>
                   </div>
-                  <div className="flex items-center space-x-2.5">
+                  <div className="flex items-center space-x-3">
                       {completionMessage ? (
-                          <span className="text-teal-400 font-black text-[9px] uppercase tracking-widest">{completionMessage}</span>
+                          <span className="text-white font-black text-[10px] uppercase tracking-widest">{completionMessage}</span>
                       ) : (
                           <button 
                             onClick={handleMarkComplete}
-                            disabled={isSubmitting}
-                            className="px-4 py-1.5 bg-[#FF6B35] text-white font-black rounded-full shadow-lg text-[9px] uppercase tracking-widest active:scale-95 disabled:opacity-50"
+                            disabled={!isButtonEnabled || isSubmitting}
+                            className={`rounded-full px-7 py-2.5 transition-all duration-300 font-black text-[10px] uppercase tracking-widest active:scale-95 text-white shadow-lg ${
+                                isButtonEnabled 
+                                    ? 'bg-emerald-500 hover:bg-emerald-600 hover:shadow-emerald-500/20 cursor-pointer' 
+                                    : 'bg-emerald-300 cursor-not-allowed opacity-60'
+                            }`}
                           >
                               {isSubmitting ? 'Syncing...' : 'Submit Fix'}
                           </button>
                       )}
                   </div>
               </div>
-
-              <div className="mt-3 pt-3 border-t border-white/10">
+              <div className="mt-4 pt-4 border-t border-white/20">
                   <input 
                       ref={fieldRef}
                       type="text"
                       value={fieldValue}
                       onChange={(e) => { setFieldValue(e.target.value); if (e.target.value.trim()) setValidationError(false); }}
-                      placeholder={`Provide details for ${activeAction.label.toLowerCase()}...`}
-                      className={`w-full bg-white/5 border-b-2 rounded-lg py-2 px-3 text-white font-bold outline-none transition-all placeholder-white/30 text-[13px] ${validationError ? 'border-rose-500 bg-rose-500/10' : 'border-transparent focus:border-teal-400'}`}
+                      placeholder={`Enter verification details for ${activeAction.label}...`}
+                      className={`w-full bg-white/15 border border-white/30 text-white placeholder-white/60 rounded-xl py-3 px-4 outline-none transition-all text-[14px] ${validationError ? 'border-rose-400 bg-rose-500/20 shadow-[0_0_12px_rgba(251,113,133,0.3)]' : 'focus:border-white/60 focus:bg-white/20'}`}
                   />
               </div>
           </motion.div>
       )}
 
-      <div className="bg-white/95 backdrop-blur-xl border border-white/30 rounded-[32px] p-5 shadow-2xl overflow-hidden">
-          <div className="mb-4 flex items-center justify-between">
+      <div className="bg-white/20 backdrop-blur-2xl rounded-[16px] border border-white/30 shadow-[0_8px_32px_rgba(0,0,0,0.1)] p-6 overflow-hidden">
+          <div className="mb-6 flex items-center justify-between">
               <div>
-                  <h2 className="text-slate-900 font-black text-base tracking-tight leading-none">Client Accounts</h2>
-                  <p className="text-slate-500 text-[8px] font-bold uppercase tracking-widest mt-1">{clientGroups.length} Managed Portfolios</p>
+                  <h2 className="text-white font-black text-lg tracking-tight leading-none">Managed Portfolios</h2>
+                  <p className="text-white/60 text-[9px] font-bold uppercase tracking-widest mt-1.5">{clientGroups.length} Strategic Accounts</p>
               </div>
               <div className="relative">
                   <input 
                       type="text" 
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Find Client..."
-                      className="bg-slate-50 border border-slate-100 rounded-full py-1.5 pl-7 pr-3 text-slate-900 font-bold outline-none transition text-[9px] w-32 focus:border-teal-500/30"
+                      placeholder="Search accounts..."
+                      className="bg-white/15 border border-white/30 text-white placeholder-white/60 rounded-full py-2 pl-8 pr-4 text-[10px] w-40 outline-none focus:bg-white/25 transition-all focus:ring-1 ring-white/20"
                   />
-                  <svg className="absolute left-2 top-1/2 -translate-y-1/2 w-2.5 h-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                  <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
               </div>
           </div>
-
-          <div className="flex items-center -space-x-3 py-3 px-1 overflow-x-auto custom-scrollbar no-scrollbar scroll-smooth">
+          <div className="flex items-center space-x-2 py-4 px-1 overflow-x-auto no-scrollbar scroll-smooth">
               {clientGroups.map((client) => (
-                  <ClientAvatar 
-                      key={client.name}
-                      client={client}
-                      isActive={selectedClientName === client.name}
-                      onClick={() => setSelectedClientName(client.name)}
-                  />
+                  <ClientAvatar key={client.name} client={client} isActive={selectedClientName === client.name} onClick={() => setSelectedClientName(client.name)} />
               ))}
           </div>
       </div>
 
       <AnimatePresence mode="wait">
           {selectedGroup && (
-              <motion.section 
-                  key={selectedGroup.name}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="space-y-3"
-              >
-                  <div className="bg-white/95 backdrop-blur-xl border border-white/30 rounded-[32px] overflow-hidden shadow-2xl">
-                      <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-                          <div className="flex items-center space-x-3.5">
-                              <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-slate-50 border border-slate-100 p-1 overflow-hidden">
-                                  <img 
-                                      src={`https://cdn.brandfetch.io/${selectedGroup.domain}`}
-                                      className="w-full h-full object-contain"
-                                      alt=""
-                                      onError={(e) => { 
-                                          const img = e.target as HTMLImageElement;
-                                          if (!img.src.includes('google')) {
-                                              img.src = `https://www.google.com/s2/favicons?domain=${selectedGroup.domain}&sz=128`;
-                                          } else {
-                                              img.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedGroup.name)}&background=f8fafc&color=94a3b8&font-size=0.35&bold=true`;
-                                          }
-                                      }}
-                                  />
-                              </div>
-                              <div>
-                                  <h3 className="text-slate-900 font-black text-sm tracking-tight leading-none">{selectedGroup.name}</h3>
-                                  <p className="text-slate-500 text-[8px] font-bold uppercase tracking-widest mt-1">{selectedGroup.deals.length} Active Opportunities</p>
-                              </div>
+              <motion.section key={selectedGroup.name} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="space-y-4">
+                  <div className="bg-white/20 backdrop-blur-2xl rounded-[16px] border border-white/30 shadow-[0_12px_48px_rgba(0,0,0,0.15)] overflow-hidden relative">
+                      {/* PRIORITY ALERT BADGE */}
+                      <div className="absolute top-5 right-5 z-20 group cursor-help">
+                          <div className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-white shadow-2xl transition-all hover:scale-105 ${
+                              selectedGroup.deals.some(d => d.health < 60) ? 'text-rose-600' : 'text-emerald-600'
+                          }`}>
+                              <span className={`w-2 h-2 rounded-full ${selectedGroup.deals.some(d => d.health < 40) ? 'bg-rose-500 animate-pulse' : (selectedGroup.deals.some(d => d.health < 75) ? 'bg-amber-400' : 'bg-emerald-500')}`} />
+                              <span>{selectedGroup.deals.some(d => d.health < 60) ? 'Action Required' : 'Status: Healthy'}</span>
                           </div>
-                          <div className="text-right">
-                              <p className="text-slate-400 text-[7px] font-black uppercase tracking-widest mb-0.5">Portfolio Value</p>
-                              <p className="text-slate-900 font-black text-base leading-none">
-                                  ${selectedGroup.deals.reduce((sum, d) => sum + d.value, 0).toLocaleString()}
-                              </p>
+                          <div className="absolute top-full right-0 mt-3 w-56 bg-slate-900/98 backdrop-blur-3xl border border-white/20 rounded-2xl p-4 shadow-[0_20px_60px_rgba(0,0,0,0.4)] opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-[100] translate-y-2 group-hover:translate-y-0">
+                              <p className="text-white text-[10px] font-black uppercase tracking-widest mb-3 pb-2 border-b border-white/10">Strategic Alerts</p>
+                              {selectedGroup.deals.filter(d => d.health < 75).length > 0 ? (
+                                  <p className="text-white/80 text-[11px] leading-relaxed">
+                                      Critical focus: {selectedGroup.deals.filter(d => d.health < 75).length} active opportunities require documentation updates to maintain pipeline velocity.
+                                  </p>
+                              ) : (
+                                  <p className="text-white/80 text-[11px] leading-relaxed">Account engagement and deal data are currently within healthy performance thresholds.</p>
+                              )}
                           </div>
                       </div>
 
-                      <div className="divide-y divide-slate-50">
-                          {selectedGroup.deals.map((deal) => (
-                              <div key={deal.id} className="p-4 flex items-center justify-between hover:bg-slate-50/50 transition cursor-pointer group">
-                                  <div className="flex-1">
-                                      <div className="flex items-center space-x-2.5 mb-1">
-                                          <p className="text-slate-900 font-black text-xs tracking-tight group-hover:text-teal-600 transition-colors leading-none">{deal.name}</p>
-                                          <span className={`px-2 py-0.5 rounded-full border text-[7px] font-black uppercase tracking-widest ${getStageColor(deal.stage)}`}>
-                                              {deal.stage}
-                                          </span>
-                                      </div>
-                                      <div className="flex items-center space-x-3">
-                                          <p className="text-slate-400 text-[8px] font-bold uppercase tracking-widest leading-none">Est. Close: {deal.closeDate}</p>
-                                          <p className="text-slate-900 font-black text-[10px] leading-none">${deal.value.toLocaleString()}</p>
-                                      </div>
-                                  </div>
-
-                                  <div className="flex items-center space-x-3.5">
-                                      <div className="text-right">
-                                          <div className="flex items-center space-x-1.5">
-                                              <span className={`text-[9px] font-black ${deal.health > 70 ? 'text-teal-600' : deal.health > 50 ? 'text-orange-500' : 'text-rose-600'}`}>{deal.health}</span>
-                                              <div className="w-10 bg-slate-100 rounded-full h-0.5 overflow-hidden">
-                                                  <div className={`h-full transition-all duration-1000 ${deal.health > 70 ? 'bg-teal-500' : deal.health > 50 ? 'bg-orange-400' : 'bg-rose-500'}`} style={{ width: `${deal.health}%` }}></div>
-                                              </div>
+                      <div className="p-6 border-b border-white/15 flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                              <div className="w-11 h-11 rounded-2xl flex items-center justify-center bg-white border border-white/40 p-2 shadow-inner overflow-hidden">
+                                  <img src={`https://cdn.brandfetch.io/${selectedGroup.domain}`} className="w-full h-full object-contain" alt="" onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedGroup.name)}&background=ffffff&color=000000`; }} />
+                              </div>
+                              <div className="flex flex-col">
+                                  <h3 className="text-white font-black text-lg tracking-tight leading-none">{selectedGroup.name}</h3>
+                                  <div className="flex items-center space-x-3 mt-1.5 overflow-x-auto no-scrollbar max-w-[200px] md:max-w-none">
+                                      <div className="flex items-center space-x-1.5 px-2 py-0.5 rounded-md bg-white/10 border border-white/10 shrink-0">
+                                          <div className="w-3 h-3 rounded-full border border-teal-400/60 flex items-center justify-center p-[2px]">
+                                              <div className="w-full h-full bg-teal-400 rounded-full" style={{ clipPath: 'inset(0 75% 0 0)' }}></div>
                                           </div>
-                                          <p className="text-[7px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Health Score</p>
+                                          <span className="text-white/60 text-[8px] font-black uppercase tracking-widest whitespace-nowrap">Service Coverage: 25%</span>
                                       </div>
-                                      <svg className="w-3 h-3 text-slate-300 group-hover:text-teal-500 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
                                   </div>
                               </div>
-                          ))}
+                          </div>
+                          <div className="text-right pr-32 md:pr-40">
+                              <p className="text-white/60 text-[8px] font-black uppercase tracking-widest mb-1">Total Value</p>
+                              <div className="flex items-center justify-end space-x-2.5">
+                                  <span className="text-[11px] font-black text-emerald-400 flex items-center gap-1">
+                                      <IconTrendingUp /> +18%
+                                  </span>
+                                  <p className="text-white font-black text-xl leading-none tracking-tighter">${selectedGroup.deals.reduce((sum, d) => sum + d.value, 0).toLocaleString()}</p>
+                              </div>
+                          </div>
+                      </div>
+                      <div className="divide-y divide-white/10 bg-white/[0.02]">
+                          {selectedGroup.deals.map((deal) => {
+                              const priorityColor = deal.health < 50 ? 'bg-[#FF6B35]' : deal.health < 75 ? 'bg-amber-500' : 'bg-emerald-500';
+                              const statusLabel = deal.health < 50 ? 'Urgent Compliance Audit' : deal.health < 75 ? 'Pending Finance Verification' : 'Approved';
+                              
+                              const lastContactDays = Math.floor(Math.random() * 30);
+                              const engagementColor = lastContactDays < 7 ? 'text-emerald-400' : lastContactDays < 21 ? 'text-amber-400' : 'text-[#FF6B35]';
+                              const engagementLabel = lastContactDays < 7 ? 'Active' : lastContactDays < 21 ? 'Warm' : 'Risk';
+
+                              return (
+                                <div 
+                                    key={deal.id} 
+                                    className="relative flex hover:bg-white/10 transition-colors cursor-pointer group px-1"
+                                >
+                                    {/* Thicker Priority Accent Bar */}
+                                    <div className={`w-[5px] self-stretch ${priorityColor} shrink-0 my-2 rounded-full`} />
+                                    
+                                    <div className="flex-1 p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center space-x-3 mb-2 flex-wrap gap-y-2">
+                                                <p className="text-white font-black text-[15px] tracking-tight leading-none truncate max-w-[280px]">{deal.name}</p>
+                                                <span className={`px-2.5 py-1 rounded-md text-[8px] font-black uppercase tracking-widest shadow-sm ${getStageColor(deal.stage)}`}>{deal.stage}</span>
+                                            </div>
+                                            <div className="flex items-center space-x-4">
+                                                <div className="flex items-center space-x-2 bg-white/10 px-2.5 py-1 rounded-full border border-white/5">
+                                                    <span className="text-white/60 text-[9px] font-black uppercase tracking-widest">Close:</span>
+                                                    <span className="text-white font-bold text-[10px] uppercase">{deal.closeDate}</span>
+                                                </div>
+                                                <p className="text-white font-black text-[13px] leading-none tracking-tight">${deal.value.toLocaleString()}</p>
+                                            </div>
+                                            
+                                            <div className="mt-3 flex flex-wrap items-center gap-3">
+                                                <span className="bg-white/15 border border-white/20 text-white/80 text-[9px] font-bold px-3 py-1 rounded-md leading-none shadow-sm">
+                                                    Teams: 3 Active
+                                                </span>
+                                                <span className="text-white/60 text-[11px] font-medium leading-none">
+                                                    Status: {statusLabel}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center space-x-6 shrink-0 mt-2 md:mt-0 md:text-right">
+                                            {/* ENGAGEMENT SCORE */}
+                                            <div className="flex flex-col items-end">
+                                                <div className="flex items-center space-x-2">
+                                                    <span className={`w-2 h-2 rounded-full ${engagementColor.replace('text-', 'bg-')}`}></span>
+                                                    <span className={`text-[12px] font-black ${engagementColor}`}>{engagementLabel}</span>
+                                                </div>
+                                                <p className="text-[8px] text-white/50 font-black uppercase tracking-widest mt-1">Last Outreach: {lastContactDays}d ago</p>
+                                            </div>
+
+                                            <div className="flex flex-col items-end min-w-[100px]">
+                                                <div className="flex items-center space-x-2.5">
+                                                    <span className={`text-[13px] font-black ${deal.health > 70 ? 'text-emerald-400' : deal.health > 50 ? 'text-amber-300' : 'text-[#FF6B35]'}`}>{deal.health}%</span>
+                                                    <div className="w-16 bg-white/15 rounded-full h-1 overflow-hidden shadow-inner">
+                                                        <div className={`h-full bg-white transition-all duration-1000 shadow-[0_0_8px_rgba(255,255,255,0.5)]`} style={{ width: `${deal.health}%` }}></div>
+                                                    </div>
+                                                </div>
+                                                <p className="text-[8px] text-white/50 font-black uppercase tracking-widest mt-1">Deal Health Score</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Professional Tooltip on Hover */}
+                                    <div className="absolute left-1/2 -translate-x-1/2 -top-10 bg-slate-900/95 backdrop-blur-xl text-white/95 text-[10px] font-bold px-4 py-2 rounded-lg shadow-2xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap z-[200] border border-white/20 translate-y-2 group-hover:translate-y-0">
+                                        Cross-functional Audit Required: Compliance • Finance • Legal
+                                    </div>
+                                </div>
+                              );
+                          })}
+                      </div>
+
+                      {/* NEXT BEST ACTION BANNER - Standardized Spacing & Style */}
+                      <div className="bg-white/10 backdrop-blur-3xl border-t-2 border-white/15 p-5 flex items-center justify-between mt-4">
+                          <div className="flex items-center space-x-4">
+                              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-white shadow-xl border border-white/20">
+                                  <IconPhone />
+                              </div>
+                              <div className="flex flex-col">
+                                  <p className="text-white font-black text-[13px] tracking-tight">Schedule renewal call - 3 entities expiring Q1</p>
+                                  <p className="text-white/50 text-[9px] font-black uppercase tracking-[0.15em] mt-1">Recommended</p>
+                              </div>
+                          </div>
+                          <button className="bg-white text-slate-900 font-black text-[10px] uppercase tracking-widest py-3 px-8 rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.2)] hover:bg-slate-100 hover:shadow-[0_12px_28px_rgba(255,255,255,0.1)] transition-all active:scale-95 border border-white">
+                              Create Task
+                          </button>
                       </div>
                   </div>
               </motion.section>
           )}
       </AnimatePresence>
-
-      {clientGroups.length === 0 && (
-          <div className="p-16 text-center bg-white/20 backdrop-blur-xl rounded-[40px] border border-white/20">
-              <div className="text-3xl mb-3">🔍</div>
-              <h3 className="text-white font-black text-lg mb-0.5">No Clients Found</h3>
-              <p className="text-white/60 text-[10px]">Adjust your search or filters to see accounts.</p>
-          </div>
-      )}
     </div>
   );
 };

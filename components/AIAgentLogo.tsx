@@ -1,60 +1,112 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 
 interface AIAgentLogoProps {
-  state: 'idle' | 'listening' | 'speaking' | 'processing';
+  state?: 'idle' | 'listening' | 'speaking' | 'processing';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  noBackground?: boolean;
 }
 
-export const AIAgentLogo: React.FC<AIAgentLogoProps> = ({ state }) => {
-  const getLogoStateClass = () => {
-    switch (state) {
-      case 'listening': return 'scale-[1.05] border-[#00D9FF] shadow-[0_0_30px_rgba(0,217,255,1)] animate-[listening-pulse_0.5s_ease-out]';
-      case 'speaking': return 'animate-[speaking-pulse_0.8s_ease-in-out_infinite]';
-      case 'processing': return 'animate-spin-slow brightness-110';
-      default: return 'ai-agent-logo-container ai-agent-logo-glow';
+export const AIAgentLogo: React.FC<AIAgentLogoProps> = ({ state = 'idle', size = 'md', noBackground = false }) => {
+  const sizeMap = {
+    sm: 32,
+    md: 44,
+    lg: 64,
+    xl: 128,
+  };
+
+  const pixelSize = sizeMap[size];
+
+  // Official Wolters Kluwer Brand Palette
+  const colors = {
+    blueMid: "#3B82F6",
+    blueLight: "#60A5FA",
+    greenVibrant: "#84CC16",
+    greenLight: "#BEF264",
+    redCenter: "#EF4444",
+  };
+
+  /**
+   * 5x5 Grid Layout (matching the WK circular icon pattern)
+   * 1 = blueMid, 2 = blueLight, 3 = greenVibrant, 4 = greenLight, 5 = redCenter
+   * null = empty corner
+   */
+  const grid = [
+    [null, 1, 2, 1, null],
+    [1, 3, 4, 3, 1],
+    [2, 4, 5, 4, 2],
+    [1, 3, 4, 3, 1],
+    [null, 1, 2, 1, null],
+  ];
+
+  const getColor = (val: number | null) => {
+    switch(val) {
+      case 1: return colors.blueMid;
+      case 2: return colors.blueLight;
+      case 3: return colors.greenVibrant;
+      case 4: return colors.greenLight;
+      case 5: return colors.redCenter;
+      default: return 'transparent';
     }
   };
 
+  const containerVariants = {
+    idle: { scale: 1 },
+    listening: { scale: [1, 1.05, 1], transition: { duration: 1.5, repeat: Infinity } },
+    speaking: { y: [0, -4, 0], transition: { duration: 0.4, repeat: Infinity } },
+    processing: { rotate: 360, transition: { duration: 2, repeat: Infinity, ease: "linear" } }
+  };
+
   return (
-    <div 
-      className={`relative w-[180px] h-[180px] md:w-[200px] md:h-[200px] border-2 border-[#00D9FF] rounded-[8px] bg-black shadow-[0_0_20px_rgba(0,217,255,0.4)] flex items-center justify-center overflow-hidden transition-all duration-300 ${getLogoStateClass()}`}
-      title="AI Coach Agent - Wolters Kluwer"
+    <motion.div 
+      variants={containerVariants}
+      animate={state}
+      className={`relative inline-flex items-center justify-center rounded-full transition-shadow duration-500 ${!noBackground ? 'bg-white shadow-lg border border-white/20' : ''}`}
+      style={{ width: pixelSize, height: pixelSize, padding: noBackground ? 0 : pixelSize * 0.12 }}
     >
-      {/* Pixelated Sphere Simulation */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="relative w-32 h-32 rounded-full overflow-hidden flex items-center justify-center">
-          {/* Grid of pixels */}
-          <div className="grid grid-cols-8 gap-[2px] w-full h-full p-2">
-            {Array.from({ length: 64 }).map((_, i) => {
-              const isCenter = (i >= 27 && i <= 28) || (i >= 35 && i <= 36);
-              const isOuter = i < 8 || i > 55 || i % 8 === 0 || i % 8 === 7;
+      <svg 
+        viewBox="0 0 100 100" 
+        className="w-full h-full overflow-visible"
+      >
+        <defs>
+          <clipPath id="logoCircle">
+            <circle cx="50" cy="50" r="49" />
+          </clipPath>
+        </defs>
+        
+        <g clipPath="url(#logoCircle)">
+          {grid.map((row, y) => 
+            row.map((cell, x) => {
+              if (cell === null) return null;
               return (
-                <div 
-                  key={i} 
-                  className={`w-full h-full rounded-sm transition-colors duration-500 ${
-                    isCenter ? 'bg-[#2A1A4A] opacity-90' :
-                    isOuter ? 'bg-[#C8FF00] opacity-60' :
-                    i % 3 === 0 ? 'bg-[#00D9FF]' : 'bg-[#87CEEB]'
-                  } ${state === 'speaking' ? 'animate-pulse' : ''}`}
-                  style={{ animationDelay: `${i * 0.02}s` }}
+                <rect 
+                  key={`${x}-${y}`}
+                  x={x * 20}
+                  y={y * 20}
+                  width="19"
+                  height="19"
+                  fill={getColor(cell)}
+                  rx="1.5"
                 />
               );
-            })}
-          </div>
-          {/* Overlay gradient for depth */}
-          <div className="absolute inset-0 bg-radial-gradient from-transparent to-black/40"></div>
-        </div>
-      </div>
-
-      {/* Mechanical corners/screws */}
-      <div className="absolute top-1 left-1 w-2 h-2 rounded-full bg-slate-400/50"></div>
-      <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-slate-400/50"></div>
-      <div className="absolute bottom-1 left-1 w-2 h-2 rounded-full bg-slate-400/50"></div>
-      <div className="absolute bottom-1 right-1 w-2 h-2 rounded-full bg-slate-400/50"></div>
-
-      {/* WK Monogram */}
-      <div className="absolute bottom-2 right-2 bg-white/10 px-1.5 py-0.5 rounded border border-white/20">
-        <span className="text-white/60 text-[9px] font-black tracking-tighter">WK</span>
-      </div>
-    </div>
+            })
+          )}
+        </g>
+        
+        {/* Trademark symbol */}
+        {size !== 'sm' && (
+          <text 
+            x="90" 
+            y="96" 
+            fontSize="8" 
+            fontWeight="bold" 
+            fontFamily="sans-serif"
+            fill={noBackground ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.5)"}
+          >
+            ®
+          </text>
+        )}
+      </svg>
+    </motion.div>
   );
 };

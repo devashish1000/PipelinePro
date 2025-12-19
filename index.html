@@ -16,10 +16,27 @@
         --text-secondary: #4A5568;
       }
 
+      @keyframes mesh-gradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+
+      .mesh-bg {
+        background: linear-gradient(135deg, 
+          #1E40AF 0%, 
+          #3B82F6 25%, 
+          #0EA5E9 50%, 
+          #D4A574 75%, 
+          #1D4ED8 100%
+        );
+        background-size: 400% 400%;
+        animation: mesh-gradient 20s ease-in-out infinite;
+      }
+
       body {
         font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
-        background: linear-gradient(180deg, var(--app-bg-start) 0%, var(--app-bg-end) 100%);
-        background-attachment: fixed;
+        background: #111827;
         color: white;
         margin: 0;
         padding: 0;
@@ -50,52 +67,30 @@
         -webkit-overflow-scrolling: touch;
       }
 
-      /* Glassmorphism Card Style */
+      /* Precision Glassmorphism */
       .glass-card {
-        background: var(--card-bg);
-        backdrop-filter: blur(20px) saturate(180%);
-        -webkit-backdrop-filter: blur(20px) saturate(180%);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(24px) saturate(200%);
+        -webkit-backdrop-filter: blur(24px) saturate(200%);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
       }
 
       .ios-blur {
-        backdrop-filter: blur(20px) saturate(180%);
-        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        backdrop-filter: blur(24px) saturate(180%);
+        -webkit-backdrop-filter: blur(24px) saturate(180%);
       }
 
-      /* AI Agent Animations */
-      @keyframes breathing-pulse {
-        0%, 100% { transform: scale(1); filter: brightness(1); }
-        50% { transform: scale(1.03); filter: brightness(1.1); }
+      /* Custom scrollbar for glassmorphic elements */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
       }
-
-      @keyframes neon-pulse {
-        0%, 100% { box-shadow: 0 0 15px rgba(0,191,165,0.4); }
-        50% { box-shadow: 0 0 25px rgba(0,191,165,0.7); }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
       }
-
-      @keyframes listening-pulse {
-        0% { transform: scale(1); }
-        30% { transform: scale(1.08); }
-        100% { transform: scale(1); }
-      }
-
-      @keyframes speaking-pulse {
-        0%, 100% { transform: scale(1); border-color: #00BFA5; }
-        50% { transform: scale(1.1); border-color: #FF6B35; }
-      }
-
-      .ai-agent-logo-container {
-        animation: breathing-pulse 3.5s ease-in-out infinite;
-      }
-      
-      .ai-agent-logo-glow {
-        animation: neon-pulse 2s ease-in-out infinite;
-      }
-
-      ::-webkit-scrollbar {
-        width: 0px;
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
       }
 
       @keyframes slide-up {
@@ -103,21 +98,22 @@
         to { transform: translateY(0); opacity: 1; }
       }
       .animate-ios-slide {
-        animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
       }
     </style>
     <script type="importmap">
-    {
-      "imports": {
-        "@google/genai": "https://esm.sh/@google/genai@^1.33.0",
-        "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-        "react/": "https://esm.sh/react@^19.2.3/",
-        "react": "https://esm.sh/react@^19.2.3",
-        "recharts": "https://esm.sh/recharts@^3.6.0",
-        "framer-motion": "https://esm.sh/framer-motion@^11.11.11"
-      }
-    }
-    </script>
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.33.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "recharts": "https://esm.sh/recharts@^3.6.0",
+    "framer-motion": "https://esm.sh/framer-motion@^11.11.11",
+    "motion/": "https://esm.sh/motion@^12.23.26/"
+  }
+}
+</script>
   </head>
   <body>
     <div id="root"></div>
