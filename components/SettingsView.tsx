@@ -1,4 +1,6 @@
+
 import React, { useState } from 'react';
+import { woltersKluwerReps } from '../data/salesReps';
 
 const Toggle = ({ enabled, onChange }: { enabled: boolean; onChange: () => void }) => (
   <button 
@@ -34,9 +36,9 @@ export const SettingsView = () => {
   const [useCloud, setUseCloud] = useState(false);
 
   return (
-    <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 min-h-screen p-6 pb-24 rounded-[48px] -m-4">
-        <div className="max-w-3xl mx-auto">
-            <div className="mb-6 mt-2">
+    <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 min-h-screen p-4 md:p-8 pb-32 w-full flex flex-col">
+        <div className="max-w-3xl mx-auto w-full">
+            <div className="mb-6 mt-2 px-2">
                 <p className="text-white/70 text-[10px] font-black uppercase tracking-[0.4em] mb-1">Preferences</p>
                 <h2 className="text-3xl font-black text-white tracking-tight">System Settings</h2>
                 <p className="text-white/90 text-[12px] font-medium mt-1">Configure your Pipeline Manager and AI Coach experience.</p>
@@ -50,7 +52,7 @@ export const SettingsView = () => {
                 <div className="flex items-center justify-between">
                     <div>
                         <h4 className="text-white font-bold text-[14px]">Strict Data Enforcement</h4>
-                        <p className="text-white/90 text-[11px] mt-0.5 font-medium">Require all compliance fields before deal stage progression</p>
+                        <p className="text-white/90 text-[11px] mt-0.5 font-medium">Require all compliance fields before stage progression</p>
                     </div>
                     <Toggle enabled={strictValidation} onChange={() => setStrictValidation(!strictValidation)} />
                 </div>
@@ -63,21 +65,8 @@ export const SettingsView = () => {
             >
                 <div className="flex items-center justify-between">
                     <div>
-                        <h4 className="text-white font-bold text-[14px]">Simulation Feedback Tone</h4>
+                        <h4 className="text-white font-bold text-[14px]">Simulation Feedback</h4>
                         <p className="text-white/90 text-[11px] mt-0.5 font-medium">Generative AI analysis vs fixed rules</p>
-                    </div>
-                    <div className="flex items-center bg-white/10 rounded-full p-1 border border-white/20">
-                        <span className="px-3 py-1 text-[9px] font-black uppercase text-white/50">Rules</span>
-                        <div className="w-8 h-4 bg-white/40 rounded-full mx-1 flex items-center justify-end px-1">
-                            <div className="w-2 h-2 bg-white rounded-full"></div>
-                        </div>
-                        <span className="px-3 py-1 text-[9px] font-black uppercase text-white">AI Gen</span>
-                    </div>
-                </div>
-                <div className="pt-4 border-t border-white/20 flex items-center justify-between">
-                    <div>
-                        <h4 className="text-white font-bold text-[14px]">Predictive Win Analysis</h4>
-                        <p className="text-white/90 text-[11px] mt-0.5 font-medium">Forecasting deal probability patterns</p>
                     </div>
                     <Toggle enabled={useLovableAI} onChange={() => setUseLovableAI(!useLovableAI)} />
                 </div>
@@ -95,26 +84,7 @@ export const SettingsView = () => {
                     </div>
                     <Toggle enabled={useCloud} onChange={() => setUseCloud(!useCloud)} />
                 </div>
-                <button className="w-full mt-2 bg-white/30 hover:bg-white/40 text-white rounded-full py-3 transition-all duration-300 font-black text-[10px] uppercase tracking-widest active:scale-95">Reset System Cache</button>
-            </SettingsSection>
-
-            <SettingsSection 
-                title="Integration"
-                color="bg-orange-500 shadow-orange-500/30"
-                icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>}
-            >
-                <p className="text-white/90 text-[11px] mb-3 font-medium">LWC Deployment Endpoint</p>
-                <div className="bg-black/30 rounded-xl p-4 font-mono text-[10px] text-white/80 border border-white/20">
-                    <span className="text-blue-300">&lt;c-pipeline-coach</span> <br/>
-                    <span className="pl-4 text-purple-300">rep-id</span>=<span className="text-orange-300">"{'{repId}'}"</span> <br/>
-                    <span className="text-blue-300">&gt;&lt;/c-pipeline-coach&gt;</span>
-                </div>
-                <div className="mt-3">
-                    <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" className="text-white hover:text-white/80 text-[9px] font-black uppercase tracking-widest flex items-center group transition-all">
-                        <span>API Documentation</span>
-                        <svg className="w-3.5 h-3.5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-                    </a>
-                </div>
+                <button className="w-full mt-4 bg-white/30 hover:bg-white/40 text-white rounded-full py-3 transition-all duration-300 font-black text-[10px] uppercase tracking-widest active:scale-95">Reset System Cache</button>
             </SettingsSection>
         </div>
     </div>

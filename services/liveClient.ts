@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, LiveServerMessage, Modality } from '@google/genai';
 
 interface LiveClientEvents {
@@ -10,7 +11,6 @@ interface LiveClientEvents {
 }
 
 export class LiveClient {
-  private ai: GoogleGenAI | null = null;
   private inputAudioContext: AudioContext | null = null;
   private outputAudioContext: AudioContext | null = null;
   private inputNode: GainNode | null = null;
@@ -22,70 +22,101 @@ export class LiveClient {
   private sources = new Set<AudioBufferSourceNode>();
   private sessionPromise: Promise<any> | null = null;
   private events: LiveClientEvents;
-  private isConnected = false;
   private isIntentionalDisconnect = false;
+  private retryCount = 0;
+  private maxRetries = 3;
+
+  // Public analysers for visualization
+  public inputAnalyser: AnalyserNode | null = null;
+  public outputAnalyser: AnalyserNode | null = null;
 
   constructor(events: LiveClientEvents) {
     this.events = events;
   }
 
-  async connect(systemInstruction: string) {
-    if (this.isConnected) return;
-    this.isIntentionalDisconnect = false;
+  private async initializeAudio() {
+    await this.cleanupAudio();
 
     try {
-      // Check for API key and prompt if missing
-      const hasKey = await (window as any).aistudio.hasSelectedApiKey();
-      if (!hasKey) {
-        await (window as any).aistudio.openSelectKey();
-        // Per instructions: assume success and proceed after triggering the dialog
-      }
-
-      const apiKey = process.env.API_KEY;
-      if (!apiKey) {
-        throw new Error("API Key not found. Please select a paid Google Cloud project API key.");
-      }
-
-      // MANDATORY: Create fresh instance right before use to capture latest API key state
-      this.ai = new GoogleGenAI({ apiKey });
-
       this.inputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
       this.outputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
       
-      await this.inputAudioContext.resume();
-      await this.outputAudioContext.resume();
+      if (this.inputAudioContext.state === 'suspended') await this.inputAudioContext.resume();
+      if (this.outputAudioContext.state === 'suspended') await this.outputAudioContext.resume();
 
       this.inputNode = this.inputAudioContext.createGain();
       this.outputNode = this.outputAudioContext.createGain();
       this.outputNode.connect(this.outputAudioContext.destination);
 
-      this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.inputAnalyser = this.inputAudioContext.createAnalyser();
+      this.inputAnalyser.fftSize = 256;
+      
+      this.outputAnalyser = this.outputAudioContext.createAnalyser();
+      this.outputAnalyser.fftSize = 256;
+      this.outputNode.connect(this.outputAnalyser);
+
+      this.stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: { echoCancellation: true, noiseSuppression: true } 
+      });
+    } catch (err) {
+      console.error("[LiveClient] Audio Hardware Error:", err);
+      throw new Error("Microphone access denied. Please check your browser permissions.");
+    }
+  }
+
+  async connect(systemInstruction: string, isRetry = false) {
+    this.isIntentionalDisconnect = false;
+    if (!isRetry) this.retryCount = 0;
+
+    try {
+      const hasKey = await (window as any).aistudio.hasSelectedApiKey();
+      if (!hasKey) {
+        await (window as any).aistudio.openSelectKey();
+      }
+
+      const apiKey = process.env.API_KEY;
+      if (!apiKey) {
+        throw new Error("API Key not found. Please click 'Select Key' and choose a paid project.");
+      }
+
+      await this.initializeAudio();
+
+      // Create a fresh instance for every connection attempt
+      const ai = new GoogleGenAI({ apiKey });
 
       const sessionConfig = {
         model: 'gemini-2.5-flash-native-audio-preview-09-2025',
         callbacks: {
-          onopen: this.handleOpen.bind(this),
+          onopen: () => {
+            console.log("[LiveClient] Connection established.");
+            this.retryCount = 0;
+            this.handleOpen();
+          },
           onmessage: this.handleMessage.bind(this),
-          onclose: this.handleClose.bind(this),
-          onerror: (e: any) => {
+          onclose: (e: CloseEvent) => {
+            if (!this.isIntentionalDisconnect) {
+              this.handleAutoReconnect(systemInstruction);
+            }
+          },
+          onerror: async (e: any) => {
             if (this.isIntentionalDisconnect) return;
             
-            console.error('[LiveClient] WebSocket Error:', e);
-            let message = "A connection error occurred.";
-            
-            // Extract meaningful message from ErrorEvent or simple Error
-            if (e.message) message = e.message;
-            else if (e.reason) message = e.reason;
-            else if (typeof e === 'string') message = e;
-            else if (e.error?.message) message = e.error.message;
+            const rawMessage = (e.message || String(e)).toLowerCase();
+            console.error('[LiveClient] WebSocket Error:', rawMessage);
 
-            // Handle "Requested entity was not found" per instructions
-            if (message.toLowerCase().includes("requested entity was not found")) {
-                (window as any).aistudio.openSelectKey();
+            if (rawMessage.includes("requested entity was not found") || rawMessage.includes("403") || rawMessage.includes("billing")) {
+              await (window as any).aistudio.openSelectKey();
+              this.events.onError?.(new Error("AI Coach Connection Failed: Please ensure you select an API key from a project with active billing. Free projects do not support native audio streams."));
+              this.disconnect();
+              return;
             }
 
-            this.events.onError?.(new Error(`LIVE API CONNECTION FAILED: ${message.toUpperCase()}`));
-            this.disconnect();
+            if (this.retryCount < this.maxRetries) {
+              this.handleAutoReconnect(systemInstruction);
+            } else {
+              this.events.onError?.(new Error("Persistent connection error. Please try again later."));
+              this.disconnect();
+            }
           },
         },
         config: {
@@ -99,20 +130,37 @@ export class LiveClient {
         },
       };
 
-      this.sessionPromise = this.ai.live.connect(sessionConfig);
-      // Wait for the promise to resolve/reject to catch immediate errors in the connect call
+      this.sessionPromise = ai.live.connect(sessionConfig);
       await this.sessionPromise;
-      this.isConnected = true;
+      
     } catch (err) {
-      console.error('[LiveClient] connect exception:', err);
+      console.error('[LiveClient] Connection setup error:', err);
       const msg = err instanceof Error ? err.message : String(err);
-      
-      if (msg.toLowerCase().includes("requested entity was not found")) {
-         await (window as any).aistudio.openSelectKey();
-      }
-      
-      this.events.onError?.(new Error(`LIVE API CONNECTION FAILED: ${msg.toUpperCase()}`));
+      this.events.onError?.(new Error(msg));
       this.disconnect();
+    }
+  }
+
+  private async handleAutoReconnect(instruction: string) {
+    this.retryCount++;
+    const delay = Math.min(Math.pow(2, this.retryCount) * 1000, 5000);
+    await new Promise(resolve => setTimeout(resolve, delay));
+    this.connect(instruction, true).catch(() => {});
+  }
+
+  private async cleanupAudio() {
+    if (this.processor) { this.processor.onaudioprocess = null; this.processor.disconnect(); this.processor = null; }
+    if (this.source) { this.source.disconnect(); this.source = null; }
+    if (this.inputAnalyser) { this.inputAnalyser.disconnect(); this.inputAnalyser = null; }
+    if (this.outputAnalyser) { this.outputAnalyser.disconnect(); this.outputAnalyser = null; }
+    if (this.stream) { this.stream.getTracks().forEach(t => t.stop()); this.stream = null; }
+    if (this.inputAudioContext && this.inputAudioContext.state !== 'closed') {
+      try { await this.inputAudioContext.close(); } catch(e) {}
+      this.inputAudioContext = null;
+    }
+    if (this.outputAudioContext && this.outputAudioContext.state !== 'closed') {
+      try { await this.outputAudioContext.close(); } catch(e) {}
+      this.outputAudioContext = null;
     }
   }
 
@@ -120,30 +168,31 @@ export class LiveClient {
     if (this.sessionPromise) {
       this.sessionPromise.then(session => {
         session.sendRealtimeInput({ text });
-      });
+      }).catch(() => {});
     }
   }
 
   private handleOpen() {
     this.events.onOpen?.();
-    if (!this.inputAudioContext || !this.stream || !this.sessionPromise) return;
+    if (!this.inputAudioContext || !this.stream || !this.sessionPromise || !this.inputAnalyser) return;
 
     this.source = this.inputAudioContext.createMediaStreamSource(this.stream);
     this.processor = this.inputAudioContext.createScriptProcessor(4096, 1, 1);
+    this.source.connect(this.inputAnalyser);
 
     this.processor.onaudioprocess = (e) => {
-      if (!this.isConnected || this.isIntentionalDisconnect) return;
       const inputData = e.inputBuffer.getChannelData(0);
       let sum = 0;
       for (let i = 0; i < inputData.length; i++) { sum += inputData[i] * inputData[i]; }
       const rms = Math.sqrt(sum / inputData.length);
       this.events.onAudioData?.(rms);
+
       const pcmBlob = this.createBlob(inputData);
-      
-      // Critical: solely rely on sessionPromise resolves to prevent race conditions
-      this.sessionPromise!.then((session) => {
-        session.sendRealtimeInput({ media: pcmBlob });
-      });
+      this.sessionPromise?.then((session) => {
+          if (!this.isIntentionalDisconnect) {
+            session.sendRealtimeInput({ media: pcmBlob });
+          }
+      }).catch(() => {});
     };
 
     this.source.connect(this.processor);
@@ -187,34 +236,13 @@ export class LiveClient {
     }
   }
 
-  private handleClose() {
-    if (!this.isIntentionalDisconnect) {
-      this.events.onClose?.();
-    }
-    this.disconnect();
-  }
-
   disconnect() {
     this.isIntentionalDisconnect = true;
-    this.isConnected = false;
-    
     if (this.sessionPromise) {
         this.sessionPromise.then(s => { try { s.close(); } catch(e) {} }).catch(() => {});
+        this.sessionPromise = null;
     }
-    this.processor?.disconnect();
-    this.source?.disconnect();
-    this.stream?.getTracks().forEach(t => t.stop());
-    
-    if (this.inputAudioContext && this.inputAudioContext.state !== 'closed') { this.inputAudioContext.close().catch(() => {}); }
-    if (this.outputAudioContext && this.outputAudioContext.state !== 'closed') { this.outputAudioContext.close().catch(() => {}); }
-    
-    this.processor = null; 
-    this.source = null; 
-    this.stream = null;
-    this.inputAudioContext = null; 
-    this.outputAudioContext = null;
-    this.sessionPromise = null; 
-    this.ai = null;
+    this.cleanupAudio();
   }
 
   private createBlob(data: Float32Array) {

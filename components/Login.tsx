@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { GravityStarsBackground } from './GravityStarsBackground';
@@ -62,12 +63,13 @@ const LoginStepper = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Use "as const" on type: "spring" to satisfy Framer Motion type requirements
   const stepVariants = {
     hidden: { opacity: 0, scale: 0.8 },
     visible: (delay: number) => ({
       opacity: 1,
       scale: 1,
-      transition: { delay, duration: 0.5, type: "spring", stiffness: 100 }
+      transition: { delay, duration: 0.5, type: "spring" as const, stiffness: 100 }
     })
   };
 
@@ -215,17 +217,17 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             </div>
         </div>
 
-        {/* Right Side - Form Section */}
-        <div className="lg:w-[60%] bg-white/95 backdrop-blur-3xl p-6 md:p-8 flex flex-col justify-center">
+        {/* Right Side - Form Section (Glassmorphic) */}
+        <div className="lg:w-[60%] bg-white/25 backdrop-blur-[10px] p-6 md:p-8 flex flex-col justify-center border-l border-white/10 relative">
             {/* Role Toggle Selector */}
-            <div className="flex items-start justify-center gap-4 mb-8">
+            <div className="flex items-start justify-center gap-4 mb-8 relative z-10">
               <div className="flex flex-col items-center">
                 <button 
                   type="button"
                   className={`px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all duration-300 active:scale-95 ${ 
                     selectedRole === 'rep' 
                       ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30' 
-                      : 'bg-slate-200/50 text-slate-500 hover:bg-slate-200' 
+                      : 'bg-white/20 text-slate-700 hover:bg-white/40' 
                   }`} 
                   onClick={() => setSelectedRole('rep')}
                 >
@@ -236,22 +238,22 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
               <div className="flex flex-col items-center">
                 <button
                   type="button"
-                  style={{ backgroundColor: '#F3F4F6', color: '#9CA3AF' }}
-                  className="px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest pointer-events-none cursor-not-allowed opacity-60"
+                  style={{ backgroundColor: 'rgba(243, 244, 246, 0.4)', color: '#4B5563' }}
+                  className="px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest pointer-events-none cursor-not-allowed opacity-60 backdrop-blur-sm"
                 >
                   Sales Manager
                 </button>
-                <span className="text-[12px] text-[#6B7280] font-medium mt-1">Coming Soon</span>
+                <span className="text-[12px] text-slate-800 font-black uppercase tracking-widest mt-1 opacity-60">Coming Soon</span>
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
                 <div>
-                    <label className="block text-slate-700 text-[8px] font-black uppercase tracking-widest mb-1.5 ml-0.5">Work Email</label>
+                    <label className="block text-slate-800 text-[8px] font-black uppercase tracking-widest mb-1.5 ml-0.5">Work Email</label>
                     <input 
                         type="email" 
                         required
-                        className="w-full bg-white border border-slate-200 focus:border-blue-500 focus:bg-white rounded-lg py-2.5 px-4 text-slate-900 outline-none transition-all placeholder-slate-300 font-bold text-sm shadow-sm"
+                        className="w-full bg-white border border-slate-200 focus:border-blue-500 focus:bg-white rounded-lg py-2.5 px-4 text-slate-900 outline-none transition-all placeholder-slate-400 font-bold text-sm shadow-sm"
                         placeholder="email@wolterskluwer.com"
                         value={email}
                         onChange={e => setEmail(e.target.value)}
@@ -260,14 +262,13 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 
                 <div>
                     <div className="flex justify-between items-center mb-1.5 ml-0.5">
-                        <label className="block text-slate-700 text-[8px] font-black uppercase tracking-widest">Security Key</label>
-                        <a href="#" className="text-[8px] text-blue-600 font-black uppercase tracking-widest hover:underline">Reset</a>
+                        <label className="block text-slate-800 text-[8px] font-black uppercase tracking-widest">Security Key</label>
                     </div>
                     <div className="relative">
                         <input 
                             type={showPassword ? "text" : "password"}
                             required
-                            className="w-full bg-white border border-slate-200 focus:border-blue-500 focus:bg-white rounded-lg py-2.5 px-4 text-slate-900 outline-none transition-all placeholder-slate-300 font-bold text-sm shadow-sm"
+                            className="w-full bg-white border border-slate-200 focus:border-blue-500 focus:bg-white rounded-lg py-2.5 px-4 text-slate-900 outline-none transition-all placeholder-slate-400 font-bold text-sm shadow-sm"
                             placeholder="••••••••"
                             value={password}
                             onChange={e => setPassword(e.target.value)}
@@ -278,7 +279,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 p-1.5 rounded-full hover:bg-slate-100 transition-colors"
                         >
                             {showPassword ? (
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268-2.943-9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268-2.943-9.543-7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
                             ) : (
                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268-2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542 7" /></svg>
                             )}

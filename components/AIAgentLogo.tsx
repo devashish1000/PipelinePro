@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 
@@ -50,11 +51,12 @@ export const AIAgentLogo: React.FC<AIAgentLogoProps> = ({ state = 'idle', size =
     }
   };
 
+  // Use "as const" on ease: "linear" to satisfy Framer Motion type requirements
   const containerVariants = {
     idle: { scale: 1 },
     listening: { scale: [1, 1.05, 1], transition: { duration: 1.5, repeat: Infinity } },
     speaking: { y: [0, -4, 0], transition: { duration: 0.4, repeat: Infinity } },
-    processing: { rotate: 360, transition: { duration: 2, repeat: Infinity, ease: "linear" } }
+    processing: { rotate: 360, transition: { duration: 2, repeat: Infinity, ease: "linear" as const } }
   };
 
   return (

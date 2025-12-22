@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Scenario } from '../types';
 
@@ -16,15 +17,16 @@ const WK_PRODUCTS = [
 
 const PROSPECT_ROLES = [
   'CFO of Fortune 500 company',
-  'General Counsel at a major law firm',
-  'Tax Director at a global corporation',
+  'General Counsel at major firm',
+  'Tax Director at global corp',
   'Chief Compliance Officer',
   'Hospital Administrator',
-  'CTO of a mid-sized fintech company'
+  'CTO of fintech company'
 ];
 
 export const Setup: React.FC<SetupProps> = ({ onStart, onViewHistory }) => {
   const [product, setProduct] = useState(WK_PRODUCTS[0]);
+  const [productDescription, setProductDescription] = useState('');
   const [prospectRole, setProspectRole] = useState(PROSPECT_ROLES[0]);
   const [difficulty, setDifficulty] = useState<Scenario['difficulty']>('Medium');
   const [duration, setDuration] = useState<Scenario['duration']>('10 MIN');
@@ -32,71 +34,82 @@ export const Setup: React.FC<SetupProps> = ({ onStart, onViewHistory }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onStart({ product, prospectRole, difficulty, duration, context });
+    onStart({ product, productDescription, prospectRole, difficulty, duration, context });
   };
 
   return (
-    <div className="max-w-2xl mx-auto pt-5 px-6 pb-6 bg-white/20 backdrop-blur-lg rounded-xl border border-white/30 shadow-xl animate-ios-slide">
-      <div className="flex justify-between items-start mb-6">
+    <div className="max-w-xl mx-auto px-4 py-4 bg-white/10 backdrop-blur-2xl rounded-[24px] border border-white/20 shadow-2xl animate-ios-slide">
+      <div className="flex justify-between items-center gap-4 mb-4">
         <div>
-            <h2 className="text-2xl font-black text-white tracking-tight leading-none">AI Coach Setup</h2>
-            <p className="text-white/70 font-bold uppercase tracking-[0.2em] text-[8px] mt-2">Wolters Kluwer Training Sandbox</p>
+            <h2 className="text-xl font-black text-white tracking-tight leading-none">Coach Setup</h2>
+            <p className="text-white/60 font-black uppercase tracking-[0.2em] text-[8px] mt-1">Training Sandbox</p>
         </div>
         <button 
           onClick={onViewHistory}
-          className="bg-white/30 hover:bg-white/40 text-white px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all shadow-sm border border-white/20"
+          className="bg-white/10 hover:bg-white/20 active:scale-95 text-white px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border border-white/10"
         >
-          HISTORY
+          View History
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-white/70 text-[9px] font-black uppercase tracking-[0.2em] mb-2 ml-1">Target Product</label>
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <label className="block text-white/50 text-[10px] font-black uppercase tracking-[0.15em] ml-1">Target Product</label>
             <div className="relative group">
               <select
                 value={product}
                 onChange={(e) => setProduct(e.target.value)}
-                className="w-full bg-white/10 border border-white/30 text-white placeholder-white/50 rounded-lg p-4 font-bold outline-none transition appearance-none cursor-pointer shadow-inner text-[13px] focus:bg-white/20"
+                className="w-full h-10 bg-white/10 border border-white/20 text-white rounded-xl px-4 font-bold outline-none transition appearance-none cursor-pointer focus:border-white/50 focus:bg-white/15 text-[14px] shadow-sm"
               >
-                {WK_PRODUCTS.map(p => <option key={p} value={p} className="bg-slate-900">{p}</option>)}
+                {WK_PRODUCTS.map(p => <option key={p} value={p} className="bg-[#1e293b]">{p}</option>)}
               </select>
-              <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-white/50">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-white/40">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
               </div>
             </div>
           </div>
 
-          <div>
-            <label className="block text-white/70 text-[9px] font-black uppercase tracking-[0.2em] mb-2 ml-1">Prospect Profile</label>
+          <div className="space-y-1">
+            <label className="block text-white/50 text-[10px] font-black uppercase tracking-[0.15em] ml-1">Prospect Profile</label>
             <div className="relative group">
               <select
                 value={prospectRole}
                 onChange={(e) => setProspectRole(e.target.value)}
-                className="w-full bg-white/10 border border-white/30 text-white placeholder-white/50 rounded-lg p-4 font-bold outline-none transition appearance-none cursor-pointer shadow-inner text-[13px] focus:bg-white/20"
+                className="w-full h-10 bg-white/10 border border-white/20 text-white rounded-xl px-4 font-bold outline-none transition appearance-none cursor-pointer focus:border-white/50 focus:bg-white/15 text-[14px] shadow-sm"
               >
-                {PROSPECT_ROLES.map(r => <option key={r} value={r} className="bg-slate-900">{r}</option>)}
+                {PROSPECT_ROLES.map(r => <option key={r} value={r} className="bg-[#1e293b]">{r}</option>)}
               </select>
-              <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-white/50">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-white/40">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
               </div>
             </div>
           </div>
         </div>
 
-        <div>
-          <label className="block text-white/70 text-[9px] font-black uppercase tracking-[0.2em] mb-2 ml-1">Difficulty</label>
-          <div className="grid grid-cols-4 gap-2.5">
+        <div className="space-y-1">
+          <label className="block text-white/50 text-[10px] font-black uppercase tracking-[0.15em] ml-1">Product Description</label>
+          <textarea
+            value={productDescription}
+            onChange={(e) => setProductDescription(e.target.value)}
+            rows={1}
+            className="w-full bg-white/10 border border-white/20 text-white rounded-xl p-3 font-bold outline-none transition placeholder-white/20 resize-none text-[14px] focus:border-white/50 focus:bg-white/15 shadow-sm"
+            placeholder="Briefly describe the key features..."
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="block text-white/50 text-[10px] font-black uppercase tracking-[0.15em] ml-1">Challenge Level</label>
+          <div className="grid grid-cols-4 gap-2">
             {(['Easy', 'Medium', 'Hard', 'Impossible'] as const).map((level) => (
               <button
                 key={level}
                 type="button"
                 onClick={() => setDifficulty(level)}
-                className={`py-3.5 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all active:scale-95 shadow-sm border ${
+                className={`h-9 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 border ${
                   difficulty === level
-                    ? 'bg-white/40 text-white border-white/50 shadow-lg'
-                    : 'bg-white/10 text-white/60 border-white/20 hover:bg-white/20'
+                    ? 'bg-white text-slate-900 border-white shadow-lg'
+                    : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10'
                 }`}
               >
                 {level}
@@ -105,18 +118,18 @@ export const Setup: React.FC<SetupProps> = ({ onStart, onViewHistory }) => {
           </div>
         </div>
 
-        <div>
-          <label className="block text-white/70 text-[9px] font-black uppercase tracking-[0.2em] mb-2 ml-1">Call Duration</label>
-          <div className="grid grid-cols-4 gap-2.5">
+        <div className="space-y-1.5">
+          <label className="block text-white/50 text-[10px] font-black uppercase tracking-[0.15em] ml-1">Call Duration</label>
+          <div className="grid grid-cols-4 gap-2">
             {(['5 MIN', '10 MIN', '15 MIN', 'NONE'] as const).map((time) => (
               <button
                 key={time}
                 type="button"
                 onClick={() => setDuration(time)}
-                className={`py-3.5 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all active:scale-95 shadow-sm border ${
+                className={`h-9 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 border ${
                   duration === time
-                    ? 'bg-white/40 text-white border-white/50 shadow-lg'
-                    : 'bg-white/10 text-white/60 border-white/20 hover:bg-white/20'
+                    ? 'bg-white text-slate-900 border-white shadow-lg'
+                    : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10'
                 }`}
               >
                 {time}
@@ -125,22 +138,22 @@ export const Setup: React.FC<SetupProps> = ({ onStart, onViewHistory }) => {
           </div>
         </div>
 
-        <div>
-          <label className="block text-white/70 text-[9px] font-black uppercase tracking-[0.2em] mb-2 ml-1">Contextual Background</label>
+        <div className="space-y-1">
+          <label className="block text-white/50 text-[10px] font-black uppercase tracking-[0.15em] ml-1">Call Context</label>
           <textarea
             value={context}
             onChange={(e) => setContext(e.target.value)}
-            rows={3}
-            className="w-full bg-white/10 border border-white/30 text-white placeholder-white/50 rounded-lg p-5 font-bold outline-none transition placeholder-white/30 resize-none shadow-inner text-[13px] focus:bg-white/20"
-            placeholder="e.g. Prospect is pushing for a 20% discount and mentions a competitor's lower pricing..."
+            rows={2}
+            className="w-full bg-white/10 border border-white/20 text-white rounded-xl p-3 font-bold outline-none transition placeholder-white/20 resize-none text-[14px] focus:border-white/50 focus:bg-white/15 shadow-sm"
+            placeholder="e.g. Prospect is pushing for a 20% discount..."
           />
         </div>
 
         <button
           type="submit"
-          className="w-full bg-[#FF6B35] hover:bg-[#FF8B60] text-white font-black text-[14px] uppercase tracking-[0.25em] py-5 rounded-full shadow-[0_20px_40px_rgba(255,107,53,0.3)] transform transition-all active:scale-[0.98] mt-2 border border-white/20"
+          className="w-full h-12 bg-[#FF6B35] hover:bg-[#FF8B60] active:scale-[0.97] text-white font-black text-[14px] uppercase tracking-[0.2em] rounded-xl shadow-lg transition-all border border-white/20 mt-2"
         >
-          Initialize Simulation
+          Start Simulation
         </button>
       </form>
     </div>

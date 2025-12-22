@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { View, SalesRep } from '../types';
 import { woltersKluwerReps } from '../data/salesReps';
@@ -37,7 +38,8 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, onLogou
             {[
               { id: 'DASHBOARD', label: 'Scorecard' },
               { id: 'DEALS', label: 'My Pipeline' },
-              { id: 'COACH', label: 'AI Coach' }
+              { id: 'COACH', label: 'AI Coach' },
+              { id: 'SETTINGS', label: 'Settings' }
             ].map(tab => (
               <button 
                 key={tab.id}
@@ -102,8 +104,10 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, onLogou
 
             {/* GREETING & DATE */}
             <div className="flex flex-col items-center mt-0.5 leading-tight">
-              <span className="text-white font-bold text-[11px] tracking-tight">Hello, {currentUser.firstName}</span>
-              <span className="text-white/40 text-[8px] font-black uppercase tracking-[0.1em] mt-0.5">{currentDateLabel}</span>
+              <span className="text-[#3B82F6] font-black text-[11px] tracking-tight">
+                Welcome, {currentUser.firstName} | {currentUser.role}
+              </span>
+              <span className="text-white/40 text-[8px] font-black uppercase tracking-[0.1em] mt-1">{currentDateLabel}</span>
             </div>
           </div>
         </div>

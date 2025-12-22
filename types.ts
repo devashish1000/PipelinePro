@@ -11,6 +11,7 @@ export type View = 'DASHBOARD' | 'DEALS' | 'COACH' | 'SETTINGS' | 'INSIGHTS';
 
 export interface Scenario {
   product: string;
+  productDescription: string;
   prospectRole: string;
   difficulty: 'Easy' | 'Medium' | 'Hard' | 'Impossible';
   duration: '5 MIN' | '10 MIN' | '15 MIN' | 'NONE';

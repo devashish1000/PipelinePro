@@ -4,11 +4,12 @@ interface TooltipProps {
   title: string;
   description?: string;
   metrics?: { label: string; value: string | number; desc: string }[];
+  insights?: string[];
   content?: string;
   children: React.ReactNode;
 }
 
-export const Tooltip: React.FC<TooltipProps> = ({ title, description, metrics, content, children }) => {
+export const Tooltip: React.FC<TooltipProps> = ({ title, description, metrics, insights, content, children }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [tooltipStyles, setTooltipStyles] = useState<React.CSSProperties>({ opacity: 0, pointerEvents: 'none' });
   const [arrowStyles, setArrowStyles] = useState<React.CSSProperties>({});
@@ -134,6 +135,21 @@ export const Tooltip: React.FC<TooltipProps> = ({ title, description, metrics, c
                         ))}
                     </div>
                 )}
+                {insights && (
+                  <div className="mt-5 pt-4 border-t border-white/10">
+                    <h5 className="text-[9px] font-black text-teal-400/60 uppercase tracking-[0.2em] mb-3">Actionable Insights</h5>
+                    <div className="space-y-3">
+                      {insights.map((insight, i) => (
+                        <div key={i} className="flex gap-3 items-start">
+                          <div className="w-5 h-5 rounded-full bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                            <span className="text-[10px] font-black text-teal-400">{i + 1}</span>
+                          </div>
+                          <p className="text-[12px] text-white/80 leading-snug font-medium">{insight}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
             </div>
         </div>
       )}
@@ -162,6 +178,21 @@ export const Tooltip: React.FC<TooltipProps> = ({ title, description, metrics, c
                             </div>
                         ))}
                     </div>
+                )}
+                {insights && (
+                  <div className="mt-8 pt-6 border-t border-slate-100">
+                    <h5 className="text-[10px] font-black text-teal-600 uppercase tracking-[0.2em] mb-4">Actionable Insights</h5>
+                    <div className="space-y-4">
+                      {insights.map((insight, i) => (
+                        <div key={i} className="flex gap-4 items-start">
+                          <div className="w-6 h-6 rounded-full bg-teal-50 flex items-center justify-center shrink-0 border border-teal-100 mt-0.5">
+                            <span className="text-[12px] font-black text-teal-600">{i + 1}</span>
+                          </div>
+                          <p className="text-[14px] text-slate-700 leading-snug font-semibold">{insight}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
             </div>
         </div>

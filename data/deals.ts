@@ -1,13 +1,13 @@
+
 import { Deal } from '../types';
 import { woltersKluwerReps } from './salesReps';
 
 const accountNames = [
-  'Baker McKenzie', 'DLA Piper', 'Latham & Watkins', 'Kirkland & Ellis', 'Skadden Arps', 'Sidley Austin', 'White & Case', 'Jones Day',
-  'Cleveland Clinic', 'Kaiser Permanente', 'HCA Healthcare', 'Mayo Clinic', 'UnitedHealth Group', 'Pfizer', 'Johns Hopkins Medicine',
-  'JPMorgan Chase', 'Goldman Sachs', 'Bank of America', 'Wells Fargo', 'Citigroup', 'Morgan Stanley', 'Barclays', 'HSBC Holdings',
-  'Microsoft', 'Apple', 'Amazon', 'Walmart', 'ExxonMobil', 'Alphabet Inc.', 'Johnson & Johnson', 'General Electric',
-  'Deloitte', 'PwC', 'EY', 'KPMG', 'Grant Thornton', 'BDO Global', 'RSM International',
-  'Internal Revenue Service (IRS)', 'Department of Justice (DOJ)', 'Securities and Exchange Commission (SEC)', 'Federal Trade Commission (FTC)', 'FINRA'
+  'UnitedHealth Group', 'Mayo Clinic', 'HCA Healthcare', 'Skadden Arps', 'CVS', 'Baker McKenzie',
+  'JPMorgan Chase', 'Goldman Sachs', 'Deloitte', 'PwC', 'EY', 'KPMG', 'White & Case', 'Latham & Watkins',
+  'Cravath Swaine', 'DLA Piper', 'Kaiser Permanente', 'Anthem', 'Kirkland & Ellis', 'Sidley Austin',
+  'Jones Day', 'Pfizer', 'Microsoft', 'Apple', 'Amazon', 'Citigroup', 'Bank of America', 'Cleveland Clinic',
+  'Federal Trade Commission (FTC)', 'Wells Fargo', 'Morgan Stanley', 'Alphabet Inc.', 'Walmart'
 ];
 
 const dealSuffixes = [
@@ -29,12 +29,14 @@ const stages = ['Discovery', 'Qualification', 'Proposal', 'Negotiation', 'Closed
 
 const getScoreFromRepId = (repId: string): number => {
   const rank = parseInt(repId.replace('rep', ''), 10);
-  if (rank === 50) return 65; // Michael Thompson
-  if (rank <= 18) return Math.floor(100 - ((rank - 1) * (10 / 17)));
-  if (rank <= 35) return Math.floor(89 - ((rank - 19) * (10 / 16)));
-  if (rank <= 80) return Math.floor(79 - ((rank - 36) * (19 / 44)));
-  if (rank <= 95) return Math.floor(59 - ((rank - 81) * (19 / 14)));
-  return Math.floor(39 - ((rank - 96) * (19 / 4)));
+  
+  // Top 5% (5 reps): Scores 100 down to 91
+  if (rank <= 5) {
+    return Math.floor(100 - ((rank - 1) * 9 / 4));
+  }
+  
+  // Bottom 95% (95 reps): Scores 90 down to 50
+  return Math.floor(90 - ((rank - 6) * 40 / 94));
 };
 
 export const getDealsForRep = (repId: string): Deal[] => {
@@ -43,6 +45,7 @@ export const getDealsForRep = (repId: string): Deal[] => {
 
   const baseScore = getScoreFromRepId(repId);
   const rank = parseInt(repId.replace('rep', ''), 10);
+  const isMichael = rep.email === 'michael.thompson@wolterskluwer.com';
 
   const getSeededRandom = (offset: number) => {
     const x = Math.sin(rank + offset) * 10000;
@@ -50,21 +53,23 @@ export const getDealsForRep = (repId: string): Deal[] => {
   };
 
   // Quota coverage linked to score for logic
-  const targetCoveragePercent = baseScore + 20; // 65 score -> 85% coverage
+  const targetCoveragePercent = baseScore + 20; // e.g. 70 score -> 90% coverage
   const quota = rep.quota || 400000;
   const targetPipelineValue = (quota * targetCoveragePercent) / 100;
   
-  const dealCount = 6;
+  // Show 35 deals for Michael to ensure broad client representation
+  const dealCount = isMichael ? 35 : 8;
   const avgDealValue = targetPipelineValue / dealCount;
 
   const deals: Deal[] = [];
 
   for (let i = 0; i < dealCount; i++) {
-    const accountIndex = Math.floor(getSeededRandom(i + 1) * accountNames.length);
+    // Pick unique accounts sequentially first to show variety for top reps
+    const accountIndex = isMichael ? (i % accountNames.length) : Math.floor(getSeededRandom(i + 1) * accountNames.length);
     const suffixIndex = Math.floor(getSeededRandom(i + 2) * dealSuffixes.length);
-    const stageIndex = Math.floor(getSeededRandom(i + 3) * (stages.length - 1)); // Don't default to closed
+    const stageIndex = Math.floor(getSeededRandom(i + 3) * (stages.length - 1));
     
-    // Health is driven by the rep's base score
+    // Health variance
     const healthVariance = (getSeededRandom(i + 4) * 10) - 5; 
     let health = Math.floor(baseScore + healthVariance);
     health = Math.max(20, Math.min(100, health)); 

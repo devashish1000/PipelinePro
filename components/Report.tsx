@@ -160,7 +160,7 @@ export const Report: React.FC<ReportProps> = ({ analysis, transcripts, onRestart
   };
 
   return (
-    <div className="space-y-3 animate-ios-slide pb-20">
+    <div className="space-y-3 animate-ios-slide pb-32">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
         <div>
           <p className="text-teal-400 text-[10px] font-black uppercase tracking-[0.4em] mb-1">Simulation Complete</p>

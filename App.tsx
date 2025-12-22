@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Login } from './components/Login';
 import { Header } from './components/Header';
@@ -165,12 +166,10 @@ const App = () => {
       setScoreAdjustment(newScoreAdj);
       setCompletedActionIds(prev => [...prev, justCompletedId]);
       
-      const currentRemainingCount = visibleActions.length - 1; 
-      
       setIsValidating(false);
       setNotification(null);
 
-      const completionMsg = `Action verified. ${currentRemainingCount} items remaining.`;
+      const completionMsg = `Action verified. ${visibleActions.length - 1} items remaining.`;
       setLastCompletionMessage(completionMsg);
 
       if (newRank < prevRank) {
@@ -203,7 +202,7 @@ const App = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col font-sans text-white relative">
+    <div className="min-h-screen flex flex-col font-sans text-white relative w-full">
       <Header 
         currentView={currentView} 
         onNavigate={setCurrentView} 
@@ -219,7 +218,7 @@ const App = () => {
         }}
       />
       
-      <main className="flex-1 p-3 md:p-6 overflow-y-auto max-w-7xl mx-auto w-full">
+      <main className="flex-1 overflow-y-auto max-w-7xl mx-auto w-full md:p-6">
         {currentView === 'DASHBOARD' && (
             <DealHealthDashboard 
                 currentUser={currentUser} 
@@ -235,6 +234,7 @@ const App = () => {
             <DealPipeline 
                 currentUser={currentUser} 
                 activeAction={activeAction}
+                visibleActions={visibleActions}
                 onCompleteAction={handleCompleteAction}
                 onCancelAction={() => { setActiveAction(null); showNotification('Action deferred', 'info'); }}
                 isSubmitting={isValidating}
@@ -245,7 +245,7 @@ const App = () => {
         {currentView === 'COACH' && <DealCoach currentUser={currentUser} />}
         {currentView === 'SETTINGS' && <SettingsView />}
         {currentView === 'INSIGHTS' && (
-            <div className="flex items-center justify-center h-full text-slate-300">
+            <div className="flex items-center justify-center h-full text-slate-300 p-6">
                 <div className="text-center glass-card p-12 rounded-[24px]">
                     <h2 className="text-3xl font-black text-slate-900 mb-4">Strategic Insights</h2>
                     <p className="text-slate-600 font-medium">Advanced territory analytics module is being synchronized.</p>
@@ -272,23 +272,10 @@ const App = () => {
                     : 'bg-white/95 text-slate-900 border-white'
               }`}>
                   <div className="flex items-center space-x-4">
-                    {notification.type === 'rank' ? (
-                        <span className="text-3xl">🏆</span>
-                    ) : notification.type === 'success' ? (
-                        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                    ) : notification.type === 'loading' ? (
-                        <svg className="animate-spin h-7 w-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                    ) : (
-                        <svg className="w-7 h-7 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    )}
+                    {notification.type === 'rank' ? <span className="text-3xl">🏆</span> : (notification.type === 'success' ? <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg> : (notification.type === 'loading' ? <svg className="animate-spin h-7 w-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> : <svg className="w-7 h-7 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>))}
                     <span className="font-black text-lg tracking-tight">{notification.message}</span>
                   </div>
-                  {notification.subtext && (
-                      <p className="mt-2 text-[10px] font-black uppercase tracking-[0.15em] opacity-80 pl-11">{notification.subtext}</p>
-                  )}
+                  {notification.subtext && <p className="mt-2 text-[10px] font-black uppercase tracking-[0.15em] opacity-80 pl-11">{notification.subtext}</p>}
               </div>
           </div>
       )}
